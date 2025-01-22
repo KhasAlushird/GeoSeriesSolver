@@ -9,7 +9,16 @@ from sympy import (latex, simplify, sin, cos, tan,
                    ln, exp, Abs, pi, I, E, asin, acos, atan,
                      sinh, cosh, tanh, sqrt, log, factorial)
 import math
-from Helpers import serie_calculer
+import os
+import importlib
+# import os
+# current_dir = os.path.dirname(os.path.abspath(__file__))
+# resources_dir = os.path.join(current_dir, '..', 'Resources')
+# if resources_dir not in sys.path:
+#     sys.path.append(resources_dir)
+from Resources.Helpers import serie_calculer
+from Resources._temp_code import F
+
 class PlotCanvas(FigureCanvas):
     def __init__(self, parent=None):
         fig, self.ax = plt.subplots()
@@ -18,26 +27,51 @@ class PlotCanvas(FigureCanvas):
         self.show_line = False
         self.show_value = False
         self.serie_mode = False
+        self.advanced_mode = False
+        self.serieFonction_mode = False
         self.have_warned_for_nan = False
         self.range_mode = '0-10'
         self.expression = 'n**2'
+        self.latex_expression = r'$n^2$'
         self.plot()
 
-    def set_expression(self, expression):
+    def set_expression(self, text_list:list):
         self.have_warned_for_nan = False
-        self.expression = expression
+        self.expression = text_list[1]
+        self.latex_expression = '$'
+        self.latex_expression += text_list[0]
+        self.latex_expression+='$'
         self.plot()
 
+    def _F_reloader(self):
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        resources_dir = os.path.join(current_dir, '..', 'Resources')
+        if resources_dir not in sys.path:
+            sys.path.append(resources_dir)
+        
+        import _temp_code
+        importlib.reload(_temp_code)
+        F = _temp_code.F
+        return F
+    
     def plot(self):
         self.ax.clear()
-        if self.serie_mode:
-            self.expression = self.expression.replace('n','k')
-            self.ax.set_title(r'$S_n = \sum_{k=0}^{n}  '  + f'{latex(simplify(self.expression))}$')
-            self.ax.set_ylabel(r'$S_n$', fontsize=14, rotation=0)
+        if self.advanced_mode:
+            self.ax.set_title('F(n)')
+            self.ax.set_ylabel('F(n)', fontsize=14, rotation=0)
+            self.ax.set_xlabel('n')
         else:
-            self.ax.set_title(r'$U_n = '  + f'{latex(simplify(self.expression))}$')
-            self.ax.set_ylabel(r'$U_n$', fontsize=14, rotation=0)
-        self.ax.set_xlabel('n')
+            self.ax.set_title(self.latex_expression)
+            if self.serie_mode:
+                self.ax.set_ylabel(r'$S_n$', fontsize=14, rotation=0)
+                self.ax.set_xlabel('n')
+            else:
+                if not self.serieFonction_mode:
+                    self.ax.set_ylabel(r'$U_n$', fontsize=14, rotation=0)
+                    self.ax.set_xlabel('n')
+                else:
+                    self.ax.set_ylabel(r'$f_n$', fontsize=14, rotation=0)
+                    self.ax.set_xlabel('x')
         self._point_scatter(self.range_mode)
         self.draw()
 
@@ -60,14 +94,24 @@ class PlotCanvas(FigureCanvas):
 
         y_points = []
         for n in x_points:
-            if not self.serie_mode:
+            if self.advanced_mode:
+                F = self._F_reloader()
+                
                 try:
-                    y_points.append(eval(self.expression, {"n": n, 'k':n,"np": np, "sin": sin, "cos": cos, "tan": tan, "ln": ln, "exp": exp, "Abs": Abs, "pi": pi, "I": I, "E": E, "asin": asin, "acos": acos, "atan": atan, "sinh": sinh, "cosh": cosh, "tanh": tanh, "sqrt": sqrt, "log": log, "factorial": factorial}))
-                except (ZeroDivisionError, ValueError, RuntimeWarning, FloatingPointError):
-                    y_points.append(np.nan)  # 使用 NaN 表示错误
+                    y_points.append(F(n))
+                except:
+                    QMessageBox.warning(self, "警告", f"点{n}无定义")
+                    return
+
             else:
-                result = serie_calculer(self.expression,range_mode)
-                y_points.append(result[n+1])
+                if not self.serie_mode:
+                    try:
+                        y_points.append(eval(self.expression, {"n": n, 'k':n,"np": np, "sin": sin, "cos": cos, "tan": tan, "ln": ln, "exp": exp, "Abs": Abs, "pi": pi, "I": I, "E": E, "asin": asin, "acos": acos, "atan": atan, "sinh": sinh, "cosh": cosh, "tanh": tanh, "sqrt": sqrt, "log": log, "factorial": factorial}))
+                    except (ZeroDivisionError, ValueError, RuntimeWarning, FloatingPointError):
+                        y_points.append(np.nan)  # 使用 NaN 表示错误
+                else:
+                    result = serie_calculer(self.expression,range_mode)
+                    y_points.append(result[n+1])
 
         self.ax.scatter(x_points, y_points, color='red', s=point_size)
         if self.serie_mode and not self.have_warned_for_nan:
@@ -126,6 +170,10 @@ class ImageDisplayer(QWidget):
     def change_serie_mode(self, if_enable):
         self.checkbox.setEnabled(if_enable)
         self.plot_canvas.serie_mode = not if_enable
+
+    def change_advance_mode(self,advance_mode:bool):
+        self.checkbox.setEnabled(not advance_mode)
+        self.plot_canvas.advanced_mode = advance_mode
 
     
     def _add_trend_line(self, state):

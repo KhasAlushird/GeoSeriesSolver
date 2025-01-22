@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import QSize, QRect
 from PyQt6.QtGui import QColor, QPainter
 from PyQt6.QtCore import Qt
-def latex_render(prefix,latex_expression):
+def latex_render(latex_expression):
 
     html_content = f"""
             <html>
@@ -33,7 +33,7 @@ def latex_render(prefix,latex_expression):
             </script>
             </head>
             <body>
-            <p>$$ {prefix}{latex_expression} $$</p>
+            <p>$$ {latex_expression} $$</p>
             </body>
             </html>
             """

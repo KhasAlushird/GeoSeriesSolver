@@ -5,7 +5,7 @@ def F(n):
     if n == 0:
         return math.cos(n)
     else:
-        return F(n-1) + 2
+        return F(n-1) + 1
 
 def output_latex():
     return latexify.get_latex(F)

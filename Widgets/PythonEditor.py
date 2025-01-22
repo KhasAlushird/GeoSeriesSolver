@@ -8,11 +8,24 @@ from pygments.lexers.python import PythonLexer
 from pygments.token import Token
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import pyqtSignal
-from _temp_code import output_latex
+from pathlib import Path
 import os
 import re
 import ast
-from Helpers import LineNumberArea
+# current_dir = os.path.dirname(os.path.abspath(__file__))
+# resources_dir = os.path.join(current_dir, '..', 'Resources')
+# if resources_dir not in sys.path:
+#     sys.path.append(resources_dir)
+
+
+# from Helpers import LineNumberArea
+# from _temp_code import output_latex
+
+
+from Resources.Helpers import LineNumberArea
+from Resources._temp_code import output_latex
+
+
 
 
 
@@ -101,6 +114,7 @@ class CodeEditor(QPlainTextEdit):
         self.highlighter = PythonHighlighter(self.document())
         self.setPlaceholderText()
         self.textChanged.connect(self.check_syntax)
+        self.have_error = False
 
         self.line_number_area = LineNumberArea(self)
         self.blockCountChanged.connect(self.line_number_area.update_line_number_area_width)
@@ -154,13 +168,17 @@ def output_latex():
         try:
             ast.parse(code)
             self.parent().syntax_label.setText("语法正确")
+            self.have_error = False
             self.parent().syntax_label.setStyleSheet("color: green;")
         except SyntaxError as e:
             self.parent().syntax_label.setText(f"存在语法错误: {e}")
+            self.have_error = True
             self.parent().syntax_label.setStyleSheet("color: red;")
 
 class PythonEditor(QWidget):
     code_text = pyqtSignal(str)
+    advanced_mode_signal = pyqtSignal()
+    
     def __init__(self):
         super().__init__()
         self.initUI()
@@ -177,17 +195,21 @@ class PythonEditor(QWidget):
         layout.addWidget(self.submit_button)
 
     def _submit(self):
+        if self.editor.have_error:
+            QMessageBox.warning(self, "警告", "存在语法错误")
+            return
         code = self.editor.toPlainText()
         if not re.search(r'def\s+F\s*\(', code):
             QMessageBox.warning(self, "警告", "'F'函数缺失")
             return
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(current_dir, "_temp_code.py")
+        file_path = os.path.join(current_dir, '..', 'Resources', '_temp_code.py')
         with open(file_path, 'w') as file:
             file.write(code)
 
         self.code_text.emit(output_latex())
-        print(output_latex())
+        self.advanced_mode_signal.emit()
+        # print(output_latex())
     
 
 

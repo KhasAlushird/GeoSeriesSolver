@@ -4,23 +4,24 @@ from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from sympy import latex,simplify
 from PyQt6.QtCore import Qt
-from Helpers import latex_render
+import re
 
 class ExpressionInputer(QWidget):
-    expression_changed_signal = pyqtSignal(str)  # 定义一个信号，传递字符串类型的解析式
+    expression_changed_signal_displayer = pyqtSignal(list)  # 发送给ImageDisplayer,格式为[latex_expression,sympy_expression]
+    expression_changed_signal_render = pyqtSignal(str)
+    expression_changed_signal_render_error = pyqtSignal(str)
     trendline_checkbox_signal = pyqtSignal(bool)
 
     def __init__(self):
         super().__init__()
         self.initUI()
+        self.serie_mode = False
+        self.serieFonction_mode = False
 
     def initUI(self):
-        self.trendline_checkbox_enabled = True
         layout = QVBoxLayout(self)
-        self.expression_shower = QWebEngineView(self)
-        layout.addWidget(self.expression_shower)
         self.inputer = QLineEdit(self)
-        self.inputer.textChanged[str].connect(self._label_shower)
+        self.inputer.textChanged[str].connect(self._send_to_render)
         layout.addWidget(self.inputer)
 
 
@@ -47,12 +48,33 @@ class ExpressionInputer(QWidget):
 
     def _serie_mode(self, state):
         if state == Qt.CheckState.Checked.value:
-            self.trendline_checkbox_enabled = False
+            self.serie_mode = True
         else:
-            self.trendline_checkbox_enabled = True
-        self._label_shower(self.inputer.text())
-        # todo: 实现级
-        pass
+            self.serie_mode = False
+        self._send_to_render(self.inputer.text())
+        
+        self.trendline_checkbox_signal.emit(not self.serie_mode)
+
+    def _latex_expression_generator(self,raw_expression)->list:
+        '''
+        返回[latex_expression,sympy_expression]
+        '''
+        sympy_expression = simplify(raw_expression)
+        sympy_expression = str(sympy_expression)
+        latex_expression = latex(simplify(raw_expression))
+        if self.serie_mode:
+            latex_expression = re.sub(r'\bn\b', 'k', latex_expression)
+            prefix = r'S_n = \sum_{k=0}^{n} '
+            
+        else:
+            latex_expression = re.sub(r'\bk\b', 'n', latex_expression)
+            if not self.serieFonction_mode:
+                prefix = r'U_n = '
+            else: 
+                prefix = r'f_n = '
+
+        return [prefix + latex_expression,sympy_expression]
+
 
 
     def _change_buttons(self,state):
@@ -84,20 +106,13 @@ class ExpressionInputer(QWidget):
             self.buttons[i].clicked.connect(lambda _, expr=expressions[i][1]: self._insert_expression(expr))
         
 
-    def _label_shower(self, text: str):
-    # 使用 sympy 将 Python 表达式转换为 LaTeX 表达式
+    def _send_to_render(self, text: str):
         try:
-            if not self.trendline_checkbox_enabled:
-                prefix = r'S_n = \sum_{k=0}^{n} '
-                text = text.replace('n','k')
-            else:
-                text = text.replace('k','n')
-                prefix = r'U_n = '
-            latex_expression = latex(simplify(text))
-            html_content = latex_render(prefix,latex_expression)
-            self.expression_shower.setHtml(html_content)
+            text = self._latex_expression_generator(text)[0]
+            self.expression_changed_signal_render.emit(text)
         except Exception as e:
-            self.expression_shower.setHtml(f"<p>Error: {e}</p>")
+            self.expression_changed_signal_render_error.emit(str(e))
+
 
     #输出按钮列表
     def _buttons_generator(self)->list:
@@ -124,13 +139,14 @@ class ExpressionInputer(QWidget):
         self.inputer.setText(new_text)
 
     def _submit(self):
-        if self.trendline_checkbox_enabled:
+        if not self.serie_mode:
             self.trendline_checkbox_signal.emit(True)
         else:
             self.trendline_checkbox_signal.emit(False)
         text = self.inputer.text()
-        text = text.replace('k', 'n') 
-        self.expression_changed_signal.emit(text)
+        text_LIST = self._latex_expression_generator(text)
+        # print(text_LIST)
+        self.expression_changed_signal_displayer.emit(text_LIST)
 
 def main():
     app = QApplication(sys.argv)
