@@ -11,6 +11,7 @@ class ExpressionInputer(QWidget):
     expression_changed_signal_render = pyqtSignal(str)
     expression_changed_signal_render_error = pyqtSignal(str)
     trendline_checkbox_signal = pyqtSignal(bool)
+    serieFonction_mode_signal = pyqtSignal(bool)
 
     def __init__(self):
         super().__init__()
@@ -37,6 +38,10 @@ class ExpressionInputer(QWidget):
         self.checkbox.stateChanged.connect(self._serie_mode)
         checkboxes.addWidget(self.checkbox)
 
+        self.checkbox3 = QCheckBox('函数列模式',self)
+        self.checkbox3.stateChanged.connect(self._serieFonction_mode)
+        checkboxes.addWidget(self.checkbox3)
+
         self.checkbox2 = QCheckBox('更多表达式',self)
         self.checkbox2.stateChanged.connect(self._change_buttons)
         checkboxes.addWidget(self.checkbox2)
@@ -55,12 +60,28 @@ class ExpressionInputer(QWidget):
         
         self.trendline_checkbox_signal.emit(not self.serie_mode)
 
+
+    def _serieFonction_mode(self,state):
+        self.inputer.clear()
+        if state == Qt.CheckState.Checked.value:
+            self.serieFonction_mode = True
+        else:
+            self.serieFonction_mode = False
+
+        self._send_to_render(self.inputer.text())
+
+        self.serieFonction_mode_signal.emit(self.serieFonction_mode)
+
+
     def _latex_expression_generator(self,raw_expression)->list:
         '''
         返回[latex_expression,sympy_expression]
         '''
         sympy_expression = simplify(raw_expression)
         sympy_expression = str(sympy_expression)
+        if self.serieFonction_mode and self.serie_mode:
+            sympy_expression = latex_expression = re.sub(r'\bn\b', 'k', sympy_expression)
+
         latex_expression = latex(simplify(raw_expression))
         if self.serie_mode:
             latex_expression = re.sub(r'\bn\b', 'k', latex_expression)
@@ -145,7 +166,7 @@ class ExpressionInputer(QWidget):
             self.trendline_checkbox_signal.emit(False)
         text = self.inputer.text()
         text_LIST = self._latex_expression_generator(text)
-        # print(text_LIST)
+        print(text_LIST)
         self.expression_changed_signal_displayer.emit(text_LIST)
 
 def main():

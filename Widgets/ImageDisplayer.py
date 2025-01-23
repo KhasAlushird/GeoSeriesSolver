@@ -2,7 +2,7 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from PyQt6.QtWidgets import (QApplication, QWidget,
-                QVBoxLayout, QCheckBox, QComboBox,QMessageBox)
+                QVBoxLayout, QCheckBox, QComboBox,QMessageBox,QHBoxLayout,QStackedLayout,QSlider,QLabel,QStackedWidget)
 from PyQt6.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from sympy import (latex, simplify, sin, cos, tan, 
@@ -11,12 +11,8 @@ from sympy import (latex, simplify, sin, cos, tan,
 import math
 import os
 import importlib
-# import os
-# current_dir = os.path.dirname(os.path.abspath(__file__))
-# resources_dir = os.path.join(current_dir, '..', 'Resources')
-# if resources_dir not in sys.path:
-#     sys.path.append(resources_dir)
-from Resources.Helpers import serie_calculer
+
+from Resources.Helpers import serie_calculer,serieFonction_calculer
 from Resources._temp_code import F
 
 class PlotCanvas(FigureCanvas):
@@ -33,6 +29,7 @@ class PlotCanvas(FigureCanvas):
         self.range_mode = '0-10'
         self.expression = 'n**2'
         self.latex_expression = r'$n^2$'
+        self.curr_n_for_serieFonction = 1
         self.plot()
 
     def set_expression(self, text_list:list):
@@ -64,7 +61,10 @@ class PlotCanvas(FigureCanvas):
             self.ax.set_title(self.latex_expression)
             if self.serie_mode:
                 self.ax.set_ylabel(r'$S_n$', fontsize=14, rotation=0)
-                self.ax.set_xlabel('n')
+                if not self.serieFonction_mode:
+                    self.ax.set_xlabel('n')
+                else:
+                    self.ax.set_xlabel('x')
             else:
                 if not self.serieFonction_mode:
                     self.ax.set_ylabel(r'$U_n$', fontsize=14, rotation=0)
@@ -72,8 +72,33 @@ class PlotCanvas(FigureCanvas):
                 else:
                     self.ax.set_ylabel(r'$f_n$', fontsize=14, rotation=0)
                     self.ax.set_xlabel('x')
-        self._point_scatter(self.range_mode)
+        if not self.serieFonction_mode:
+            self._point_scatter(self.range_mode)
+        else:
+            self._fonction_scatter()
         self.draw()
+
+    def _fonction_scatter(self):
+        result = serieFonction_calculer(self.expression,self.curr_n_for_serieFonction,self.serie_mode)
+        if result[0]:
+            QMessageBox.warning(self, "警告", "存在无定义的点")
+        
+        x_points = result[1]
+        y_points = result[2]
+        self.ax.set_xticks(np.arange(0, 101, 10))
+        self.ax.plot(x_points, y_points, color='blue')
+        if self.show_value:
+            step = 10
+            if not np.isnan(float(y)):  # 仅为有效点添加标签
+                for i, (x1, y) in enumerate(zip(x_points, y_points)):
+                    if i % step ==0:
+                        self.ax.annotate(f'{y:.2f}', (x1, y), textcoords="offset points", xytext=(0, 10), ha='center')
+
+
+
+
+
+
 
     def _point_scatter(self, range_mode):
         if range_mode == '0-10':
@@ -151,20 +176,45 @@ class ImageDisplayer(QWidget):
         self.plot_canvas = PlotCanvas(self)
         layout.addWidget(self.plot_canvas)
 
+        layout1 = QHBoxLayout()
+        layout2 = QHBoxLayout()
+
         # 添加 checkable 的选项
         self.checkbox = QCheckBox('添加趋势线', self)
         self.checkbox.stateChanged.connect(self._add_trend_line)
-        layout.addWidget(self.checkbox)
+        layout1.addWidget(self.checkbox)
 
-        self.checkbox2 = QCheckBox('显示数列值',self)
+        self.checkbox2 = QCheckBox('显示数列值', self)
         self.checkbox2.stateChanged.connect(self._add_value_tag)
-        layout.addWidget(self.checkbox2)
+        layout1.addWidget(self.checkbox2)
 
+        self.checkbox3 = QCheckBox('对比模式', self)
+        self.checkbox4 = QCheckBox('显示函数值', self)
+        self.checkbox4.stateChanged.connect(self._add_value_tag)
+        self.slider = QSlider(Qt.Orientation.Horizontal)
+        layout2.addWidget(self.checkbox3)
+        layout2.addWidget(self.checkbox4)
+        layout2.addWidget(self.slider)
+
+        # 创建两个 QWidget 用于 QStackedWidget
+        widget1 = QWidget()
+        widget1.setLayout(layout1)
+        widget2 = QWidget()
+        widget2.setLayout(layout2)
+
+        # 使用 QStackedWidget 替换 QStackedLayout
+        self.stacked_widget = QStackedWidget()
+        self.stacked_widget.addWidget(widget1)
+        self.stacked_widget.addWidget(widget2)
+
+        layout.addWidget(self.stacked_widget)
 
         # 添加 combobox
+        self.label = QLabel('选择n的范围:', self)
         self.combobox = QComboBox(self)
         self.combobox.addItems(['0-10', '0-50', '0-100'])
         self.combobox.textActivated[str].connect(self._set_variable_range)
+        layout.addWidget(self.label)
         layout.addWidget(self.combobox)
 
     def change_serie_mode(self, if_enable):
@@ -174,6 +224,16 @@ class ImageDisplayer(QWidget):
     def change_advance_mode(self,advance_mode:bool):
         self.checkbox.setEnabled(not advance_mode)
         self.plot_canvas.advanced_mode = advance_mode
+
+
+    def change_serieFonction_mode(self,serieFonction_mode:bool):
+        if serieFonction_mode:
+            self.plot_canvas.serieFonction_mode = True
+            self.stacked_widget.setCurrentIndex(1)
+
+        else:
+            self.plot_canvas.serieFonction_mode = False
+            self.stacked_widget.setCurrentIndex(0)
 
     
     def _add_trend_line(self, state):
