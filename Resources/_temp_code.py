@@ -3,9 +3,11 @@ import math
 
 def F(n):
     if n == 0:
-        return math.cos(n)
+        return 0
+    elif n==1:
+        return 1
     else:
-        return F(n-1) + 1
+        return F(n-1) + F(n-2)
 
 def output_latex():
     return latexify.get_latex(F)

@@ -62,7 +62,7 @@ class ExpressionInputer(QWidget):
 
 
     def _serieFonction_mode(self,state):
-        self.inputer.clear()
+        # self.inputer.clear()
         if state == Qt.CheckState.Checked.value:
             self.serieFonction_mode = True
         else:
@@ -70,7 +70,6 @@ class ExpressionInputer(QWidget):
 
         self._send_to_render(self.inputer.text())
 
-        self.serieFonction_mode_signal.emit(self.serieFonction_mode)
 
 
     def _latex_expression_generator(self,raw_expression)->list:
@@ -166,8 +165,11 @@ class ExpressionInputer(QWidget):
             self.trendline_checkbox_signal.emit(False)
         text = self.inputer.text()
         text_LIST = self._latex_expression_generator(text)
-        print(text_LIST)
+        # print(text_LIST)
+        if self.serieFonction_mode:
+            self.serieFonction_mode_signal.emit(self.serieFonction_mode)
         self.expression_changed_signal_displayer.emit(text_LIST)
+
 
 def main():
     app = QApplication(sys.argv)

@@ -1,0 +1,175 @@
+import sys
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from PyQt6.QtWidgets import QMessageBox
+import os
+import importlib
+from Resources.Helpers import serie_calculer,serieFonction_calculer
+from Resources._temp_code import F
+
+from sympy import (latex, simplify, sin, cos, tan, 
+                   ln, exp, Abs, pi, I, E, asin, acos, atan,
+                     sinh, cosh, tanh, sqrt, log, factorial)
+
+
+
+class PlotCanvas(FigureCanvas):
+    def __init__(self, parent=None):
+        fig, self.ax = plt.subplots()
+        super().__init__(fig)
+        self.setParent(parent)
+        self.show_line = False
+        self.show_value = False
+        self.serie_mode = False
+        self.advanced_mode = False
+        self.serieFonction_mode = False
+        self.compare_mode = False
+        self.have_warned_for_nan = False
+        self.range_mode = '0-10'
+        self.expression = 'n**2'
+        self.latex_expression = r'$n^2$'
+        self.curr_n_for_serieFonction = 1
+        self.plot()
+
+    def set_expression(self, text_list:list):
+        self.have_warned_for_nan = False
+        self.expression = text_list[1]
+        self.latex_expression = '$'
+        self.latex_expression += text_list[0]
+        self.latex_expression+='$'
+        self.plot()
+
+    def _F_reloader(self):
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        resources_dir = os.path.join(current_dir, '..', 'Resources')
+        if resources_dir not in sys.path:
+            sys.path.append(resources_dir)
+        
+        import _temp_code
+        importlib.reload(_temp_code)
+        F = _temp_code.F
+        return F
+    
+    def plot(self):
+        if not self.compare_mode:
+            self.ax.clear()
+        if self.advanced_mode:
+            self.ax.set_title('F(n)')
+            self.ax.set_ylabel('F(n)', fontsize=14, rotation=0)
+            self.ax.set_xlabel('n')
+        else:
+            title = self.latex_expression
+            if (not self.compare_mode) and self.serieFonction_mode:
+                title+= f'  n={self.curr_n_for_serieFonction}'
+            self.ax.set_title(title)
+            if self.serie_mode:
+                self.ax.set_ylabel(r'$S_n$', fontsize=14, rotation=0)
+                if not self.serieFonction_mode:
+                    self.ax.set_xlabel('n')
+                else:
+                    self.ax.set_xlabel('x')
+            else:
+                if not self.serieFonction_mode:
+                    self.ax.set_ylabel(r'$U_n$', fontsize=14, rotation=0)
+                    self.ax.set_xlabel('n')
+                else:
+                    self.ax.set_ylabel(r'$f_n$', fontsize=14, rotation=0)
+                    self.ax.set_xlabel('x')
+        if not self.serieFonction_mode:
+            self._point_scatter(self.range_mode)
+        else:
+            self._fonction_scatter()
+        self.draw()
+
+    def _fonction_scatter(self):
+        print('execute serie fonction calculer')
+        result = serieFonction_calculer(self.expression,self.curr_n_for_serieFonction,self.serie_mode)
+        if result[0]:
+            QMessageBox.warning(self, "警告", "存在无定义的点")
+        
+        x_points = result[1]
+        y_points = result[2]
+        self.ax.set_xticks(np.arange(0, 101, 10))
+        self.ax.plot(x_points, y_points, color='blue')
+        if self.show_value:
+            step = 50
+            #注：enumerate(zip(x_points, y_points))每个元素形如 i,(x,y)
+            for i,(x1, y) in enumerate(zip(x_points, y_points)):
+                # print(i,x1,y)
+                if i % step ==0:
+                    if np.isfinite(float(y)):  # 仅为有效点添加标签
+                        self.ax.annotate(f'({x1:.1f}, {y:.1f})', (x1, y), textcoords="offset points", xytext=(0, 10), ha='center')
+
+
+
+
+
+
+
+    def _point_scatter(self, range_mode):
+        if range_mode == '0-10':
+            self.ax.set_xticks(np.arange(0, 11, 1))
+            x_points = np.arange(0, 11, 1)
+            x = np.linspace(0, 10, 400)
+            point_size = 50
+        elif range_mode == '0-50':
+            self.ax.set_xticks(np.arange(0, 51, 5))
+            x_points = np.arange(0, 51, 1)
+            x = np.linspace(0, 50, 400)
+            point_size = 30
+        else:
+            self.ax.set_xticks(np.arange(0, 101, 10))
+            x_points = np.arange(0, 101, 1)
+            x = np.linspace(0, 100, 400)
+            point_size = 10
+
+        y_points = []
+        for n in x_points:
+            if self.advanced_mode:
+                F = self._F_reloader()
+                
+                try:
+                    y_points.append(F(n))
+                except:
+                    QMessageBox.warning(self, "警告", f"点{n}无定义")
+                    return
+
+            else:
+                if not self.serie_mode:
+                    try:
+                        y_points.append(eval(self.expression, {"n": n, 'k':n,"np": np, "sin": sin, "cos": cos, "tan": tan, "ln": ln, "exp": exp, "Abs": Abs, "pi": pi, "I": I, "E": E, "asin": asin, "acos": acos, "atan": atan, "sinh": sinh, "cosh": cosh, "tanh": tanh, "sqrt": sqrt, "log": log, "factorial": factorial}))
+                    except (ZeroDivisionError, ValueError, RuntimeWarning, FloatingPointError):
+                        y_points.append(np.nan)  # 使用 NaN 表示错误
+                else:
+                    result = serie_calculer(self.expression,range_mode)
+                    y_points.append(result[n+1])
+
+        self.ax.scatter(x_points, y_points, color='red', s=point_size)
+        if self.serie_mode and not self.have_warned_for_nan:
+            if result[0]:
+                QMessageBox.warning(self, "警告", "存在无定义的点")
+                self.have_warned_for_nan = True
+
+        if self.show_value:
+            step = 1
+            if self.range_mode == '0-50':
+                step = 5
+            elif self.range_mode == '0-100':
+                step = 10
+            for i, (x1, y) in enumerate(zip(x_points, y_points)):
+                if not np.isnan(float(y)):  # 仅为有效点添加标签
+                    #y 是要格式化的数值。：代表格式化字符串，.2f是格式
+                    if i % step ==0:
+                        self.ax.annotate(f'{y:.2f}', (x1, y), textcoords="offset points", xytext=(0, 10), ha='center')
+                   
+
+        ###请勿调整show value 和 show line 之间的前后关系！！！
+        if self.show_line:
+            y = []
+            for n in x:
+                try:
+                   y.append(eval(self.expression, {"n": n, 'k':n,"np": np, "sin": sin, "cos": cos, "tan": tan, "ln": ln, "exp": exp, "Abs": Abs, "pi": pi, "I": I, "E": E, "asin": asin, "acos": acos, "atan": atan, "sinh": sinh, "cosh": cosh, "tanh": tanh, "sqrt": sqrt, "log": log, "factorial": factorial}))
+                except (ZeroDivisionError, ValueError, RuntimeWarning, FloatingPointError):
+                    y.append(np.nan)  # 使用 NaN 表示错误
+            self.ax.plot(x, y, color='blue')

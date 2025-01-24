@@ -69,77 +69,57 @@ def serieFonction_calculer(expression,n,serie_mode:bool)->list:
     返回形式：[if invalid n ,x_points,y_points]
     '''
     error_count = 0
+    error_flag_final = False
     x_points = np.linspace(0, 100, 400)
     y_points = []
-    for x in x_points:
-        if not serie_mode:
+
+    
+    if not serie_mode:
+        for x in x_points:
             try:
                 val = eval(expression, {"n": n, 'x':x,"np": np, "sin": sin, "cos": cos, "tan": tan, "ln": ln, "exp": exp, "Abs": Abs, "pi": pi, "I": I, "E": E, "asin": asin, "acos": acos, "atan": atan, "sinh": sinh, "cosh": cosh, "tanh": tanh, "sqrt": sqrt, "log": log, "factorial": factorial})
-            except Exception as e:
+            except ZeroDivisionError as e:
                 error_count += 1
                 val = np.nan
             y_points.append(val)
 
-        else:
-            n_points = np.arange(0, n+1)
-            y_points_curr= []
-            for n in n_points:
-                y_points_curr = []
-                for x in x_points:
-                    try:
-                        val = eval(expression, {"k": n, 'x':x,"np": np, "sin": sin, "cos": cos, "tan": tan, "ln": ln, "exp": exp, "Abs": Abs, "pi": pi, "I": I, "E": E, "asin": asin, "acos": acos, "atan": atan, "sinh": sinh, "cosh": cosh, "tanh": tanh, "sqrt": sqrt, "log": log, "factorial": factorial})                   
-                    except Exception as e:
-                        error_count += 1
-                        val = 0
-                    y_points_curr.append(val)
-
-                if n==0:
+    else:
+        n_points = np.arange(0, n+1)
+        y_points_curr= []
+        for n in n_points:
+            y_points_curr = []
+            error_flag = False
+            error_count = 0
+            for x in x_points:
+                if error_flag:
+                    break
+                
+                val = eval(expression, {"k": n, 'x':x,"np": np, "sin": sin, "cos": cos, "tan": tan, "ln": ln, "exp": exp, "Abs": Abs, "pi": pi, "I": I, "E": E, "asin": asin, "acos": acos, "atan": atan, "sinh": sinh, "cosh": cosh, "tanh": tanh, "sqrt": sqrt, "log": log, "factorial": factorial})                   
+                if not np.isfinite(float(val)):
+                    error_count += 1
+                    val = 0
+                y_points_curr.append(val)
+                if error_count >=15:
+                    error_flag = True
+                    error_flag_final = True
+            if n==0:
+                if not error_flag:
                     y_points = y_points_curr
                 else:
+                    y_points = [y*0 for y in range(0,401)]
+            else:
+                if not error_flag:
                     y_points = [y + y_curr for y,y_curr in zip(y_points,y_points_curr)]
 
     
-    if error_count >= 400:
+    if error_count >= 200:
+        error_flag_final = True
+
+    if error_flag_final:
         return [True, x_points, y_points]  
     else:   
         return [False, x_points, y_points]
 
-
-# ##test
-
-# expression = "sin(x)"
-# n = 10
-# serie_mode = False
-# result = serieFonction_calculer(expression, n, serie_mode)
-# print(result)
-
-# # 测试样例2：普通模式，复杂表达式
-# expression = "sin(x) + cos(x)"
-# n = 10
-# serie_mode = False
-# result = serieFonction_calculer(expression, n, serie_mode)
-# print(result)
-
-# # 测试样例3：序列模式，简单表达式
-# expression = "k * x"
-# n = 10
-# serie_mode = True
-# result = serieFonction_calculer(expression, n, serie_mode)
-# print(result)
-
-# # 测试样例4：序列模式，复杂表达式
-# expression = "k * sin(x) + cos(x)"
-# n = 10
-# serie_mode = True
-# result = serieFonction_calculer(expression, n, serie_mode)
-# print(result)
-
-# # 测试样例5：普通模式，包含错误的表达式
-# expression = "sin(x) + unknown_function(x)"
-# n = 10
-# serie_mode = False
-# result = serieFonction_calculer(expression, n, serie_mode)
-# print(result)
 
 class LineNumberArea(QWidget):
     def __init__(self, editor):

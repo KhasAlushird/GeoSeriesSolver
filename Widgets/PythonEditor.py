@@ -12,14 +12,7 @@ from pathlib import Path
 import os
 import re
 import ast
-# current_dir = os.path.dirname(os.path.abspath(__file__))
-# resources_dir = os.path.join(current_dir, '..', 'Resources')
-# if resources_dir not in sys.path:
-#     sys.path.append(resources_dir)
 
-
-# from Helpers import LineNumberArea
-# from _temp_code import output_latex
 
 
 from Resources.Helpers import LineNumberArea
