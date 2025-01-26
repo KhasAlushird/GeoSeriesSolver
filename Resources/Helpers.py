@@ -172,6 +172,28 @@ class LineNumberArea(QWidget):
 
 
 
+def Grandiant_color(range_mode:str,curr_n:int)->tuple:
+
+    if range_mode == '0-10':
+        steps = 10
+    elif range_mode == '0-50':
+        steps = 50
+    else:
+        steps = 100
+
+    r = 0
+    g = int(255 * (1 - curr_n / steps))
+    b = 255
+
+    r/=255
+    g/=255
+    b/=255
+    return (r,g,b)
+
+
+
+
+
 
 
 

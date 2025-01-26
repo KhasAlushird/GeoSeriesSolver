@@ -2,7 +2,8 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from PyQt6.QtWidgets import (QApplication, QWidget,
-                QVBoxLayout, QCheckBox, QComboBox,QMessageBox,QHBoxLayout,QStackedLayout,QSlider,QLabel,QStackedWidget,QLineEdit,QPushButton)
+                QVBoxLayout, QCheckBox, QComboBox,QMessageBox,QHBoxLayout,
+                QSlider,QLabel,QStackedWidget,QLineEdit,QPushButton)
 from PyQt6.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from sympy import (latex, simplify, sin, cos, tan, 
@@ -11,6 +12,7 @@ from sympy import (latex, simplify, sin, cos, tan,
 import math
 
 from Resources.PlotCanvas import PlotCanvas
+from Resources.PolarPlotCanvas import PolarPlotCanvas
 
 class ImageDisplayer(QWidget):
     def __init__(self, parent=None):
@@ -20,7 +22,12 @@ class ImageDisplayer(QWidget):
     def initUI(self):
         layout = QVBoxLayout(self)
         self.plot_canvas = PlotCanvas(self)
-        layout.addWidget(self.plot_canvas)
+        self.polar_canvas = PolarPlotCanvas(self)
+        self.current_canvas = self.plot_canvas
+        self.stacked_canvas = QStackedWidget()
+        self.stacked_canvas.addWidget(self.plot_canvas)
+        self.stacked_canvas.addWidget(self.polar_canvas)
+        layout.addWidget(self.stacked_canvas)
 
         layout1 = QVBoxLayout()
         layout2 = QVBoxLayout()
@@ -51,12 +58,12 @@ class ImageDisplayer(QWidget):
         self.checkbox4 = QCheckBox('显示函数值', self)
         self.checkbox3_2 = QCheckBox('对比模式',self)
         self.checkbox3_2.setChecked(True)
-        self.checkbox4_2 = QCheckBox('显示函数值',self)
+        self.clear_button = QPushButton('清除',self)
         self.checkbox3.stateChanged.connect(self.change_compare_mode)
         self.checkbox3_2.stateChanged.connect(self.change_compare_mode)
         
         self.checkbox4.stateChanged.connect(self._add_value_tag)
-        self.checkbox4_2.stateChanged.connect(self._add_value_tag)
+        self.clear_button.clicked.connect(self._clear_plot)
         #slider 相关
         self.slider = QSlider(Qt.Orientation.Horizontal)
         self.slider.setTickPosition(QSlider.TickPosition.TicksBelow)
@@ -96,7 +103,7 @@ class ImageDisplayer(QWidget):
         #layout3:函数列模式，且是对比模式：
         hbox_for_layout3 = QHBoxLayout()
         hbox_for_layout3.addWidget(self.checkbox3_2)
-        hbox_for_layout3.addWidget(self.checkbox4_2)
+        hbox_for_layout3.addWidget(self.clear_button)
         layout3.addLayout(hbox_for_layout3)
         hbox_for_layout3_2 = QHBoxLayout()
         hbox_for_layout3_2.addWidget(self.slider_label)
@@ -122,6 +129,9 @@ class ImageDisplayer(QWidget):
 
         layout.addWidget(self.stacked_widget)
 
+    def set_expression_for_canvas(self,text_list:list):
+        self.current_canvas.set_expression(text_list)
+
 
     def change_serie_mode(self, if_enable):
         self.checkbox.setEnabled(if_enable)
@@ -142,6 +152,7 @@ class ImageDisplayer(QWidget):
             self.stacked_widget.setCurrentIndex(0)
 
     def change_compare_mode(self,compare_mode:bool):
+        self.plot_canvas.clear_plot()
         if compare_mode:
             self.plot_canvas.compare_mode = True
             self.stacked_widget.setCurrentIndex(2)
@@ -152,7 +163,21 @@ class ImageDisplayer(QWidget):
             self.stacked_widget.setCurrentIndex(1)
             self.checkbox3.setChecked(False)
 
+    def change_complex_mode(self,complex_mode:bool):
+        if complex_mode:
+            self.stacked_canvas.setCurrentIndex(1)
+            self.current_canvas = self.polar_canvas
+            self.checkbox2.setEnabled(False)
+            self.checkbox.setEnabled(False)
+            # print('curr canvas is: polar')
+        else:
+            self.stacked_canvas.setCurrentIndex(0)
+            self.current_canvas = self.plot_canvas
+            self.checkbox2.setEnabled(True)
+            self.checkbox.setEnabled(False)
+
     
+    #这一步仅是判断趋势线是否有定义的算法，具体趋势线的绘制在plot里面
     def _add_trend_line(self, state):
         if state == Qt.CheckState.Checked.value:
             if self.plot_canvas.range_mode == '0-10':
@@ -164,13 +189,18 @@ class ImageDisplayer(QWidget):
             invalid_count = 0
             for n in x:
                     val = eval(self.plot_canvas.expression, {"n": n, "np": np, "sin": sin, "cos": cos, "tan": tan, "ln": ln, "exp": exp, "Abs": Abs, "pi": pi, "I": I, "E": E, "asin": asin, "acos": acos, "atan": atan, "sinh": sinh, "cosh": cosh, "tanh": tanh, "sqrt": sqrt, "log": log, "factorial": factorial})
-                    if math.isnan(val):
-                        invalid_count += 1
-                        if invalid_count >= 15:
-                            QMessageBox.warning(self, "警告", "趋势线无定义")
-                            self.checkbox.setChecked(False)
-                            self.plot_canvas.show_line = False
-                            return
+                    try:
+                        if not isinstance(val,complex):
+                            if math.isnan(val):
+                                invalid_count += 1
+                    except (TypeError, ValueError) as e:
+                        invalid_count +=1
+
+                    if invalid_count >= 15:
+                        QMessageBox.warning(self, "警告", "趋势线无定义")
+                        self.checkbox.setChecked(False)
+                        self.plot_canvas.show_line = False
+                        return
             self.plot_canvas.show_line = True
         else:
             self.plot_canvas.show_line = False
@@ -182,15 +212,14 @@ class ImageDisplayer(QWidget):
         self.plot_canvas.plot()
 
     def _set_variable_range(self, text):
-        self.plot_canvas.range_mode = text
+        self.current_canvas.range_mode = text
         if text == '0-10':
             self.slider.setRange(0, 10)
         elif text == '0-50':
             self.slider.setRange(0, 50)
         elif text == '0-100':
             self.slider.setRange(0, 100)
-        self.plot_canvas.plot()
-        self.plot_canvas.plot()
+        self.current_canvas.plot()
 
     def _submit_curr_n(self):
         n=self.n_inputer.text()
@@ -214,6 +243,10 @@ class ImageDisplayer(QWidget):
     def _slider_value_changed(self, value):
         self.plot_canvas.curr_n_for_serieFonction = value
         self.plot_canvas.plot()
+
+    def _clear_plot(self):
+        self.plot_canvas.clear_plot()
+        print('clear_plot execute')
 
 def main():
     app = QApplication(sys.argv)

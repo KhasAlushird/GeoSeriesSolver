@@ -1,0 +1,6 @@
+main_window:
+  title: "GeoSeriesSolver"
+  toolbar: "Barre d'outils"
+  language_label: "      Langue:"
+  advanced_mode: "Mode avancé"
+  normal_mode: "Mode normal"

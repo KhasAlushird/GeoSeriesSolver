@@ -12,6 +12,7 @@ class ExpressionInputer(QWidget):
     expression_changed_signal_render_error = pyqtSignal(str)
     trendline_checkbox_signal = pyqtSignal(bool)
     serieFonction_mode_signal = pyqtSignal(bool)
+    complex_mode_signal = pyqtSignal(bool)
 
     def __init__(self):
         super().__init__()
@@ -106,7 +107,7 @@ class ExpressionInputer(QWidget):
             ('exp', 'exp('),
             ('| |', 'Abs('),
             ('π', 'pi'),
-            ('e', 'e'),
+            ('e', 'E'),
             ('i', 'I')]
         
         else:
@@ -117,7 +118,7 @@ class ExpressionInputer(QWidget):
             ('cosh', 'cosh('),
             ('tanh', 'tanh('),
             ('√', 'sqrt()'),
-            ('log10', 'log(n,10)'),
+            ('lg', 'log(n,10)'),
             ('!', 'factorial(')
             ]
         for i in range(9):
@@ -137,14 +138,14 @@ class ExpressionInputer(QWidget):
     #输出按钮列表
     def _buttons_generator(self)->list:
         buttons = []
-        expressions = [('sin', 'sin()'),
+        expressions = [('sin', 'sin('),
             ('cos', 'cos('),
             ('tan', 'tan('),
             ('ln', 'ln('),
             ('exp', 'exp('),
             ('| |', 'Abs('),
             ('π', 'pi'),
-            ('e', 'e'),
+            ('e', 'E'),
             ('i', 'I')]
         for label,expression in expressions:
             button = QPushButton(label,self)
@@ -168,6 +169,14 @@ class ExpressionInputer(QWidget):
         # print(text_LIST)
         if self.serieFonction_mode:
             self.serieFonction_mode_signal.emit(self.serieFonction_mode)
+
+        if 'I' in text:
+            self.complex_mode_signal.emit(True)
+            print('complex mod on')
+        else:
+            self.complex_mode_signal.emit(False)
+            print('complex mode off')
+        
         self.expression_changed_signal_displayer.emit(text_LIST)
 
 

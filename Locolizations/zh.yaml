@@ -1,0 +1,6 @@
+main_window:
+  title: "GeoSeriesSolver"
+  toolbar: "工具栏"
+  language_label: "      语言:"
+  advanced_mode: "进阶模式"
+  normal_mode: "普通模式"

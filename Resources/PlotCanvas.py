@@ -1,11 +1,13 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from PyQt6.QtWidgets import QMessageBox
 import os
 import importlib
-from Resources.Helpers import serie_calculer,serieFonction_calculer
+from Resources.Helpers import serie_calculer,serieFonction_calculer,Grandiant_color
 from Resources._temp_code import F
 
 from sympy import (latex, simplify, sin, cos, tan, 
@@ -25,12 +27,17 @@ class PlotCanvas(FigureCanvas):
         self.advanced_mode = False
         self.serieFonction_mode = False
         self.compare_mode = False
+        self.have_error = False
         self.have_warned_for_nan = False
         self.range_mode = '0-10'
         self.expression = 'n**2'
         self.latex_expression = r'$n^2$'
         self.curr_n_for_serieFonction = 1
         self.plot()
+
+    def clear_plot(self):
+        self.ax.clear()
+        self.draw()
 
     def set_expression(self, text_list:list):
         self.have_warned_for_nan = False
@@ -76,11 +83,13 @@ class PlotCanvas(FigureCanvas):
                 else:
                     self.ax.set_ylabel(r'$f_n$', fontsize=14, rotation=0)
                     self.ax.set_xlabel('x')
-        if not self.serieFonction_mode:
-            self._point_scatter(self.range_mode)
-        else:
+
+        if self.serieFonction_mode:
             self._fonction_scatter()
+        else:
+            self._point_scatter(self.range_mode)
         self.draw()
+
 
     def _fonction_scatter(self):
         print('execute serie fonction calculer')
@@ -91,7 +100,11 @@ class PlotCanvas(FigureCanvas):
         x_points = result[1]
         y_points = result[2]
         self.ax.set_xticks(np.arange(0, 101, 10))
-        self.ax.plot(x_points, y_points, color='blue')
+        if not self.compare_mode:
+            self.ax.plot(x_points, y_points, color='blue')
+        else:
+            r_g_b_tuple = Grandiant_color(self.range_mode,self.curr_n_for_serieFonction)
+            self.ax.plot(x_points,y_points,color = r_g_b_tuple)
         if self.show_value:
             step = 50
             #注：enumerate(zip(x_points, y_points))每个元素形如 i,(x,y)
@@ -126,6 +139,7 @@ class PlotCanvas(FigureCanvas):
 
         y_points = []
         for n in x_points:
+            #进阶模式算法
             if self.advanced_mode:
                 F = self._F_reloader()
                 
@@ -136,21 +150,32 @@ class PlotCanvas(FigureCanvas):
                     return
 
             else:
+                #普通模式算法
                 if not self.serie_mode:
+                    #普通模式下，非级数模式算法
+                    val = eval(self.expression, {"n": n, 'k':n,"np": np, "sin": sin, "cos": cos, "tan": tan, "ln": ln, "exp": exp, "Abs": Abs, "pi": pi, "I": I, "E": E, "asin": asin, "acos": acos, "atan": atan, "sinh": sinh, "cosh": cosh, "tanh": tanh, "sqrt": sqrt, "log": log, "factorial": factorial})
+                    self.have_error = True
                     try:
-                        y_points.append(eval(self.expression, {"n": n, 'k':n,"np": np, "sin": sin, "cos": cos, "tan": tan, "ln": ln, "exp": exp, "Abs": Abs, "pi": pi, "I": I, "E": E, "asin": asin, "acos": acos, "atan": atan, "sinh": sinh, "cosh": cosh, "tanh": tanh, "sqrt": sqrt, "log": log, "factorial": factorial}))
-                    except (ZeroDivisionError, ValueError, RuntimeWarning, FloatingPointError):
-                        y_points.append(np.nan)  # 使用 NaN 表示错误
+                        if not isinstance(val, complex):
+                            if np.isfinite(float(val)):
+                                y_points.append(val)
+                                self.have_error = False
+                            else:
+                                y_points.append(np.nan)
+                        else:
+                            y_points.append(np.nan)
+                    except (TypeError, ValueError) as e:
+                        y_points.append(np.nan)
+
                 else:
+                    #普通模式下，级数模式算法
                     result = serie_calculer(self.expression,range_mode)
                     y_points.append(result[n+1])
+                    self.have_error = result[0]
+
 
         self.ax.scatter(x_points, y_points, color='red', s=point_size)
-        if self.serie_mode and not self.have_warned_for_nan:
-            if result[0]:
-                QMessageBox.warning(self, "警告", "存在无定义的点")
-                self.have_warned_for_nan = True
-
+        
         if self.show_value:
             step = 1
             if self.range_mode == '0-50':
@@ -168,8 +193,17 @@ class PlotCanvas(FigureCanvas):
         if self.show_line:
             y = []
             for n in x:
+                val = eval(self.expression, {"n": n, 'k':n,"np": np, "sin": sin, "cos": cos, "tan": tan, "ln": ln, "exp": exp, "Abs": Abs, "pi": pi, "I": I, "E": E, "asin": asin, "acos": acos, "atan": atan, "sinh": sinh, "cosh": cosh, "tanh": tanh, "sqrt": sqrt, "log": log, "factorial": factorial})
                 try:
-                   y.append(eval(self.expression, {"n": n, 'k':n,"np": np, "sin": sin, "cos": cos, "tan": tan, "ln": ln, "exp": exp, "Abs": Abs, "pi": pi, "I": I, "E": E, "asin": asin, "acos": acos, "atan": atan, "sinh": sinh, "cosh": cosh, "tanh": tanh, "sqrt": sqrt, "log": log, "factorial": factorial}))
-                except (ZeroDivisionError, ValueError, RuntimeWarning, FloatingPointError):
-                    y.append(np.nan)  # 使用 NaN 表示错误
-            self.ax.plot(x, y, color='blue')
+                    val = float(val)
+                    y.append(val)
+                except (TypeError, ValueError) as e:
+                    y.append(np.nan)
+
+            self.ax.plot(x,y,color = 'blue')
+
+                
+        if self.have_error and not self.have_warned_for_nan:
+            QMessageBox.warning(self, "警告", "存在无定义的点")
+            self.have_warned_for_nan = True
+
