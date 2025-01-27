@@ -92,7 +92,7 @@ class PlotCanvas(FigureCanvas):
 
 
     def _fonction_scatter(self):
-        print('execute serie fonction calculer')
+        # print('execute serie fonction calculer')
         result = serieFonction_calculer(self.expression,self.curr_n_for_serieFonction,self.serie_mode)
         if result[0]:
             QMessageBox.warning(self, "警告", "存在无定义的点")

@@ -6,7 +6,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from PyQt6.QtWidgets import QMessageBox
 import os
 import importlib
-from Resources.Helpers import serie_calculer, serieFonction_calculer, Grandiant_color
+from Resources.Helpers import serie_calculer, Grandiant_color
 from sympy import (latex, simplify, sin, cos, tan, 
                    ln, exp, Abs, pi, I, E, asin, acos, atan,
                    sinh, cosh, tanh, sqrt, log, factorial)
@@ -19,7 +19,6 @@ class PolarPlotCanvas(FigureCanvas):
         self.setParent(parent)
         self.show_value = False
         self.serie_mode = False
-        self.advanced_mode = False
         self.serieFonction_mode = False
         self.compare_mode = False
         self.have_error = False
@@ -57,6 +56,8 @@ class PolarPlotCanvas(FigureCanvas):
         self.draw()
 
     def _complex_scatter(self):
+        # print('curr serie mode is',self.serie_mode)
+        have_error = False
         self.have_warned_for_showValue +=1
         if self.have_warned_for_showValue ==2:
             QMessageBox.information(self, "提示", "可以点击蓝点获取数列值")
@@ -69,17 +70,29 @@ class PolarPlotCanvas(FigureCanvas):
         r = np.zeros_like(n_points, dtype=float)
         theta = np.zeros_like(n_points, dtype=float)
         colors = []
-        for i, n in enumerate(n_points):
-            try:
-                val = eval(self.expression, {"n": n, "I": I, "np": np, "sin": sin, "cos": cos, "tan": tan, "ln": ln, "exp": exp, "Abs": Abs, "pi": pi, "E": E, "asin": asin, "acos": acos, "atan": atan, "sinh": sinh, "cosh": cosh, "tanh": tanh, "sqrt": sqrt, "log": log, "factorial": factorial})
-                val = complex(val)
-                r[i] = abs(val)
-                theta[i] = np.angle(val)
-                colors.append(Grandiant_color(self.range_mode,n))
-            except Exception as e:
-                r[i] = np.nan
-                theta[i] = np.nan
-                colors.append((0,0,0))
+        if not self.serie_mode:
+            for i, n in enumerate(n_points):
+                try:
+                    val = eval(self.expression, {"n": n, "I": I, "np": np, "sin": sin, "cos": cos, "tan": tan, "ln": ln, "exp": exp, "Abs": Abs, "pi": pi, "E": E, "asin": asin, "acos": acos, "atan": atan, "sinh": sinh, "cosh": cosh, "tanh": tanh, "sqrt": sqrt, "log": log, "factorial": factorial})
+                    val = complex(val)
+                    r[i] = abs(val)
+                    theta[i] = np.angle(val)
+                    colors.append(Grandiant_color(self.range_mode,n))
+                except Exception as e:
+                    r[i] = np.nan
+                    theta[i] = np.nan
+                    colors.append((0,0,0))
+        else:
+            result = serie_calculer(self.expression,self.range_mode)
+            for i,val in enumerate(result):
+                if i==0:
+                    have_error = result[i]
+                else:
+                    the_val = complex(result[i])
+                    colors.append(Grandiant_color(self.range_mode,i-1))
+                    r[i-1]=abs(the_val)
+                    theta[i-1] = np.angle(the_val)
+                
         self.scatter = self.ax.scatter(theta, r, marker='o',c=colors, label='Complex Series')
         
         # 过滤掉 NaN 和 Inf 值
@@ -90,6 +103,8 @@ class PolarPlotCanvas(FigureCanvas):
         self.ax.legend()
         self.thetas = theta
         self.rs = r
+        if have_error:
+            QMessageBox.warning(self, "警告", "存在无定义的点")
 
     def on_click(self, event):
         if event.inaxes == self.ax:

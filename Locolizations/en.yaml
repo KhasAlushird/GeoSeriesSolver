@@ -4,3 +4,26 @@ main_window:
   language_label: "      Language:"
   advanced_mode: "Advanced Mode"
   normal_mode: "Normal Mode"
+
+expression_inputer:
+  serie_mode: "Series Mode"
+  serieFonction_mode: "Function Series Mode"
+  more_expression: "More Expressions"
+  submit_button: "Submit"
+  msg_warning: "Warning"
+  msg_complexError: "Function series are not supported in complex mode"
+  msg_expressionError: "Expression error! (sign * is indispensable ; e and i must be uppercase ; only n or k are supported as variables, and x in function series)"
+
+image_displayer:
+  n_range_label: "Select n range:"
+  add_trend_line: "Add Trend Line"
+  show_serie_val: "Show Series Value"
+  compare_mode: "Compare Mode"
+  show_func_val: "Show Function Value"
+  clear: "Clear"
+  slider_label: "Slide to change n value:"
+  submit_button: "Submit"
+  input_n: "Input n"
+  msg_warning: "Warning"
+  msg_trendline: "Trend line is undefined"
+  msg_nError: "n must be an integer between 0 and 100"

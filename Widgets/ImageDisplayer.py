@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from PyQt6.QtWidgets import (QApplication, QWidget,
                 QVBoxLayout, QCheckBox, QComboBox,QMessageBox,QHBoxLayout,
-                QSlider,QLabel,QStackedWidget,QLineEdit,QPushButton)
+                QSlider,QLabel,QStackedWidget,QLineEdit,QPushButton,QSplitter)
 from PyQt6.QtCore import Qt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from sympy import (latex, simplify, sin, cos, tan, 
@@ -15,7 +15,8 @@ from Resources.PlotCanvas import PlotCanvas
 from Resources.PolarPlotCanvas import PolarPlotCanvas
 
 class ImageDisplayer(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self,localization, parent=None):
+        self.localization = localization
         super().__init__(parent)
         self.initUI()
 
@@ -27,18 +28,18 @@ class ImageDisplayer(QWidget):
         self.stacked_canvas = QStackedWidget()
         self.stacked_canvas.addWidget(self.plot_canvas)
         self.stacked_canvas.addWidget(self.polar_canvas)
-        layout.addWidget(self.stacked_canvas)
+        # layout.addWidget(self.stacked_canvas)
 
         layout1 = QVBoxLayout()
         layout2 = QVBoxLayout()
         layout3 = QVBoxLayout()
         # 添加 combobox
-        self.combox_label = QLabel('选择n的范围:', self)
+        self.combox_label = QLabel(self.localization['n_range_label'], self)
         self.combobox = QComboBox()
         self.combobox.addItems(['0-10', '0-50', '0-100'])
         self.combobox.textActivated[str].connect(self._set_variable_range)
 
-        self.combox_label2 = QLabel('选择n的范围:', self)
+        self.combox_label2 = QLabel(self.localization['n_range_label'], self)
         self.combobox2 = QComboBox()
         self.combobox2.addItems(['0-10', '0-50', '0-100'])
         self.combobox2.textActivated[str].connect(self._set_variable_range)
@@ -47,18 +48,18 @@ class ImageDisplayer(QWidget):
 
 
         # 添加 checkable 的选项
-        self.checkbox = QCheckBox('添加趋势线', self)
+        self.checkbox = QCheckBox(self.localization['add_trend_line'], self)
         self.checkbox.stateChanged.connect(self._add_trend_line)
         
 
-        self.checkbox2 = QCheckBox('显示数列值', self)
+        self.checkbox2 = QCheckBox(self.localization['show_serie_val'], self)
         self.checkbox2.stateChanged.connect(self._add_value_tag)
         
-        self.checkbox3 = QCheckBox('对比模式', self)
-        self.checkbox4 = QCheckBox('显示函数值', self)
-        self.checkbox3_2 = QCheckBox('对比模式',self)
+        self.checkbox3 = QCheckBox(self.localization['compare_mode'], self)
+        self.checkbox4 = QCheckBox(self.localization['show_func_val'], self)
+        self.checkbox3_2 = QCheckBox(self.localization['compare_mode'],self)
         self.checkbox3_2.setChecked(True)
-        self.clear_button = QPushButton('清除',self)
+        self.clear_button = QPushButton(self.localization['clear'],self)
         self.checkbox3.stateChanged.connect(self.change_compare_mode)
         self.checkbox3_2.stateChanged.connect(self.change_compare_mode)
         
@@ -70,12 +71,12 @@ class ImageDisplayer(QWidget):
         self.slider.setTickInterval(1)
         self.slider.setRange(0, 10)
         self.slider.valueChanged.connect(self._slider_value_changed)
-        self.slider_label = QLabel('滑动改变n的大小:',self)
+        self.slider_label = QLabel(self.localization['slider_label'],self)
 
         self.n_inputer = QLineEdit(self)
-        self.submit_button_for_n = QPushButton('提交',self)
+        self.submit_button_for_n = QPushButton(self.localization['submit_button'],self)
         self.submit_button_for_n.clicked.connect(self._submit_curr_n)
-        self.submit_button_for_n_label = QLabel('输入n:',self)
+        self.submit_button_for_n_label = QLabel(self.localization['input_n'],self)
         
         #layout1: 不是函数列模式下启用：
         hbox_for_layout1 = QHBoxLayout()
@@ -127,15 +128,22 @@ class ImageDisplayer(QWidget):
 
         self.stacked_widget.setCurrentIndex(0)
 
-        layout.addWidget(self.stacked_widget)
+        # layout.addWidget(self.stacked_widget)
+
+        splitter = QSplitter(Qt.Orientation.Vertical)
+        splitter.setStyleSheet("QSplitter::handle { background-color: lightgray; }")
+        splitter.addWidget(self.stacked_canvas)
+        splitter.addWidget(self.stacked_widget)
+        layout.addWidget(splitter)
+        
 
     def set_expression_for_canvas(self,text_list:list):
         self.current_canvas.set_expression(text_list)
 
 
-    def change_serie_mode(self, if_enable):
-        self.checkbox.setEnabled(if_enable)
-        self.plot_canvas.serie_mode = not if_enable
+    def change_serie_mode(self, serie_mode:bool):
+        self.checkbox.setEnabled(not serie_mode)
+        self.current_canvas.serie_mode = serie_mode
 
     def change_advance_mode(self,advance_mode:bool):
         self.checkbox.setEnabled(not advance_mode)
@@ -197,7 +205,7 @@ class ImageDisplayer(QWidget):
                         invalid_count +=1
 
                     if invalid_count >= 15:
-                        QMessageBox.warning(self, "警告", "趋势线无定义")
+                        QMessageBox.warning(self, self.localization['msg_warning'], self.localization['msg_trendline'])
                         self.checkbox.setChecked(False)
                         self.plot_canvas.show_line = False
                         return
@@ -226,19 +234,34 @@ class ImageDisplayer(QWidget):
         try:
             n = int(n)
         except:
-            QMessageBox.warning(self,'警告','n必须为0-100内的整数')
+            QMessageBox.warning(self,self.localization['msg_warning'],self.localization['msg_nError'])
             return
         if 0<=n<=100:
             self.plot_canvas.curr_n_for_serieFonction = n
-            print('submit button execute: self.plot_canvas.plot()')
-            try:
-                print('curr expression:',self.plot_canvas.expression)
-                print('curr_n = ',self.plot_canvas.curr_n_for_serieFonction)
-            except Exception as e:
-                print('occur exception,',e)
+            # print('submit button execute: self.plot_canvas.plot()')
+            # try:
+            #     print('curr expression:',self.plot_canvas.expression)
+            #     print('curr_n = ',self.plot_canvas.curr_n_for_serieFonction)
+            # except Exception as e:
+            #     print('occur exception,',e)
             self.plot_canvas.plot()
         else:
-            QMessageBox.warning(self,'警告','n必须为0-100内的整数')
+            QMessageBox.warning(self,self.localization['msg_warning'],self.localization['msg_nError'])
+
+    def update_texts(self, localization):
+        self.localization = localization
+        self.checkbox.setText(localization['add_trend_line'])
+        self.checkbox3.setText(localization['compare_mode'])
+        self.checkbox3_2.setText(localization['compare_mode'])
+        self.checkbox2.setText(localization['show_serie_val'])
+        self.checkbox4.setText(self.localization['show_func_val'])
+        self.combox_label.setText(self.localization['n_range_label'])
+        self.combox_label2.setText(self.localization['n_range_label'])
+        self.clear_button.setText(self.localization['clear'])
+        self.slider_label.setText(self.localization['slider_label'])
+        self.submit_button_for_n.setText(self.localization['submit_button'])
+        self.submit_button_for_n_label.setText(self.localization['input_n'])
+
 
     def _slider_value_changed(self, value):
         self.plot_canvas.curr_n_for_serieFonction = value
@@ -246,7 +269,7 @@ class ImageDisplayer(QWidget):
 
     def _clear_plot(self):
         self.plot_canvas.clear_plot()
-        print('clear_plot execute')
+        # print('clear_plot execute')
 
 def main():
     app = QApplication(sys.argv)

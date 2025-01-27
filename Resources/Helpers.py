@@ -6,6 +6,7 @@ from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import QSize, QRect
 from PyQt6.QtGui import QColor, QPainter
 from PyQt6.QtCore import Qt
+import re
 def latex_render(latex_expression):
 
     html_content = f"""
@@ -77,7 +78,7 @@ def serieFonction_calculer(expression,n,serie_mode:bool)->list:
     if not serie_mode:
         for x in x_points:
             try:
-                val = eval(expression, {"n": n, 'x':x,"np": np, "sin": sin, "cos": cos, "tan": tan, "ln": ln, "exp": exp, "Abs": Abs, "pi": pi, "I": I, "E": E, "asin": asin, "acos": acos, "atan": atan, "sinh": sinh, "cosh": cosh, "tanh": tanh, "sqrt": sqrt, "log": log, "factorial": factorial})
+                val = eval(expression, {"n": n, "k":n,'x':x,"np": np, "sin": sin, "cos": cos, "tan": tan, "ln": ln, "exp": exp, "Abs": Abs, "pi": pi, "I": I, "E": E, "asin": asin, "acos": acos, "atan": atan, "sinh": sinh, "cosh": cosh, "tanh": tanh, "sqrt": sqrt, "log": log, "factorial": factorial})
             except ZeroDivisionError as e:
                 error_count += 1
                 val = np.nan
@@ -94,7 +95,7 @@ def serieFonction_calculer(expression,n,serie_mode:bool)->list:
                 if error_flag:
                     break
                 
-                val = eval(expression, {"k": n, 'x':x,"np": np, "sin": sin, "cos": cos, "tan": tan, "ln": ln, "exp": exp, "Abs": Abs, "pi": pi, "I": I, "E": E, "asin": asin, "acos": acos, "atan": atan, "sinh": sinh, "cosh": cosh, "tanh": tanh, "sqrt": sqrt, "log": log, "factorial": factorial})                   
+                val = eval(expression, {"n":n,"k": n, 'x':x,"np": np, "sin": sin, "cos": cos, "tan": tan, "ln": ln, "exp": exp, "Abs": Abs, "pi": pi, "I": I, "E": E, "asin": asin, "acos": acos, "atan": atan, "sinh": sinh, "cosh": cosh, "tanh": tanh, "sqrt": sqrt, "log": log, "factorial": factorial})                   
                 if not np.isfinite(float(val)):
                     error_count += 1
                     val = 0
@@ -189,6 +190,33 @@ def Grandiant_color(range_mode:str,curr_n:int)->tuple:
     g/=255
     b/=255
     return (r,g,b)
+
+
+def has_illegal_variables(expression:str,serie_Fonction_mode:bool):
+    # 定义合法变量和函数名
+    legal_variables = {'n', 'k', 'I', 'E', 'pi'}
+    if serie_Fonction_mode:
+        legal_variables.add('x')
+    legal_functions = {'sin', 'cos', 'tan', 'sqrt', 'log', 'exp', 'atan', 'asin','acos','sinh', 'cosh', 'tanh', 'factorial', 'Abs'}
+    
+    # 使用正则表达式提取所有变量
+   # 匹配所有的字母，忽略空格和符号
+    tokens = re.findall(r'[a-zA-Z]+', expression)
+
+    for token in tokens:
+        # 如果是函数名，跳过
+        if token in legal_functions:
+            continue
+        # 如果是单独的变量，检查是否在合法变量列表中
+        if token not in legal_variables:
+            return True  # 发现非法变量，返回True
+    
+    return False  # 没有发现非法变量，返回False
+
+
+
+
+
 
 
 

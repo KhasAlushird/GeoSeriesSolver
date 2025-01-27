@@ -19,20 +19,20 @@ def load_translations(language):
         return yaml.safe_load(file)
     
 class MainWindow(QMainWindow):
-    def __init__(self,locoalization):
+    def __init__(self,localization):
         super().__init__()
-        self.locoalization = locoalization
+        self.localization = localization
         self.initUI()
 
     def initUI(self):
         # 工具栏
-        self.toolbar = QToolBar(self.locoalization['main_window']['toolbar'])
+        self.toolbar = QToolBar(self.localization['main_window']['toolbar'])
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, self.toolbar)
 
         # 基本组件
-        self.expression_inputer = ExpressionInputer()
+        self.expression_inputer = ExpressionInputer(self.localization['expression_inputer'])
         self.python_editor = PythonEditor()
-        self.image_displayer = ImageDisplayer()
+        self.image_displayer = ImageDisplayer(self.localization['image_displayer'])
         self.latex_render = LatexRender()
 
         self.stacked_widget = QStackedWidget()
@@ -40,12 +40,12 @@ class MainWindow(QMainWindow):
         self.stacked_widget.addWidget(self.python_editor)
 
         # 附加组件
-        self.toggle_button = QPushButton(self.locoalization['main_window']['advanced_mode'], self)
+        self.toggle_button = QPushButton(self.localization['main_window']['advanced_mode'], self)
         self.toggle_button.setCheckable(True)
         self.toggle_button.clicked.connect(self._toggle_mode)
         self.toolbar.addWidget(self.toggle_button)
         
-        self.language_combobox_label = QLabel(self.locoalization['main_window']['language_label'], self)
+        self.language_combobox_label = QLabel(self.localization['main_window']['language_label'], self)
         self.toolbar.addWidget(self.language_combobox_label)
 
         self.language_combobox = QComboBox(self)
@@ -57,7 +57,7 @@ class MainWindow(QMainWindow):
         self.expression_inputer.expression_changed_signal_displayer.connect(self.image_displayer.set_expression_for_canvas)
         self.expression_inputer.expression_changed_signal_render.connect(self.latex_render.render)
         self.expression_inputer.expression_changed_signal_render_error.connect(self.latex_render.error_render)
-        self.expression_inputer.trendline_checkbox_signal.connect(self.image_displayer.change_serie_mode)
+        self.expression_inputer.serie_mode_signal.connect(self.image_displayer.change_serie_mode)
         self.expression_inputer.serieFonction_mode_signal.connect(self.image_displayer.change_serieFonction_mode)
         self.expression_inputer.complex_mode_signal.connect(self.image_displayer.change_complex_mode)
 
@@ -80,23 +80,25 @@ class MainWindow(QMainWindow):
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(left_widget)
         splitter.addWidget(self.image_displayer)
+        # splitter.setHandleWidth(10)  # 设置手柄宽度
+        splitter.setStyleSheet("QSplitter::handle { background-color: gray; }")  # 设置手柄样式
 
         layout.addWidget(splitter)
         self.setCentralWidget(central_widget)
 
         # 其余初始化选项
-        self.setWindowTitle(self.locoalization['main_window']['title'])
+        self.setWindowTitle(self.localization['main_window']['title'])
         self.setGeometry(100, 100, 800, 600)
 
     def _toggle_mode(self):
         if self.toggle_button.isChecked():
             self.stacked_widget.setCurrentWidget(self.python_editor)
             self.image_displayer.change_advance_mode(True)
-            self.toggle_button.setText(self.locoalization['main_window']['normal_mode'])
+            self.toggle_button.setText(self.localization['main_window']['normal_mode'])
         else:
             self.stacked_widget.setCurrentWidget(self.expression_inputer)
             self.image_displayer.change_advance_mode(False)
-            self.toggle_button.setText(self.locoalization['main_window']['advanced_mode'])
+            self.toggle_button.setText(self.localization['main_window']['advanced_mode'])
     
     
 
@@ -111,19 +113,23 @@ class MainWindow(QMainWindow):
             language = 'en'
         else:
             language = 'fr'
-        self.locoalization = load_translations(language)
+        self.localization = load_translations(language)
         self._update_texts()
 
     def _update_texts(self):
-        self.toolbar.setWindowTitle(self.locoalization['main_window']['toolbar'])
-        self.toggle_button.setText(self.locoalization['main_window']['advanced_mode'] if not self.toggle_button.isChecked() else self.locoalization['main_window']['normal_mode'])
-        self.setWindowTitle(self.locoalization['main_window']['title'])
+        self.toolbar.setWindowTitle(self.localization['main_window']['toolbar'])
+        self.toggle_button.setText(self.localization['main_window']['advanced_mode'] if not self.toggle_button.isChecked() else self.localization['main_window']['normal_mode'])
+        self.setWindowTitle(self.localization['main_window']['title'])
+
+        #子组件的本地化
+        self.expression_inputer.update_texts(self.localization['expression_inputer'])
+        self.image_displayer.update_texts(self.localization['image_displayer'])
 
 def main():
     app = QApplication(sys.argv)
     language = 'zh'
-    locoalization = load_translations(language)
-    main_window = MainWindow(locoalization)
+    localization = load_translations(language)
+    main_window = MainWindow(localization)
     main_window.show()
     sys.exit(app.exec())
 

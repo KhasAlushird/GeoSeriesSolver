@@ -1,6 +1,29 @@
 main_window:
   title: "GeoSeriesSolver"
   toolbar: "工具栏"
-  language_label: "      语言:"
+  language_label: "      Language:"
   advanced_mode: "进阶模式"
   normal_mode: "普通模式"
+
+expression_inputer:
+  serie_mode: "级数模式"
+  serieFonction_mode: "函数列模式"
+  more_expression: "更多表达式"
+  submit_button: "提交"
+  msg_warning: "警告"
+  msg_complexError: "复数模式下暂不支持函数列"
+  msg_expressionError: "解析式有误!(乘号*不能省略 ; e和i需大写 ; 变量仅支持n或k以及函数列中的x)"
+
+image_displayer:
+  n_range_label: "选择n的范围:"
+  add_trend_line: "添加趋势线"
+  show_serie_val: "显示数列值"
+  compare_mode: "对比模式"
+  show_func_val: "显示函数值"
+  clear: "清除"
+  slider_label: "滑动改变n的大小:"
+  submit_button: "提交"
+  input_n: "输入n"
+  msg_warning: "警告"
+  msg_trendline: "趋势线无定义"
+  msg_nError: "n必须为0-100内的整数"

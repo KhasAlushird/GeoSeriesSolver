@@ -1,24 +1,28 @@
 import sys
-from PyQt6.QtWidgets import QLabel, QLineEdit,QHBoxLayout, QApplication, QWidget, QCheckBox, QVBoxLayout, QPushButton
+from PyQt6.QtWidgets import (QLabel, QLineEdit,QHBoxLayout, QApplication, QWidget, QCheckBox, 
+                             QVBoxLayout, QMessageBox,QPushButton)
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from sympy import latex,simplify
 from PyQt6.QtCore import Qt
 import re
+from Resources.Helpers import has_illegal_variables
 
 class ExpressionInputer(QWidget):
     expression_changed_signal_displayer = pyqtSignal(list)  # 发送给ImageDisplayer,格式为[latex_expression,sympy_expression]
     expression_changed_signal_render = pyqtSignal(str)
     expression_changed_signal_render_error = pyqtSignal(str)
-    trendline_checkbox_signal = pyqtSignal(bool)
+    serie_mode_signal = pyqtSignal(bool)
     serieFonction_mode_signal = pyqtSignal(bool)
     complex_mode_signal = pyqtSignal(bool)
 
-    def __init__(self):
+    def __init__(self,localization):
         super().__init__()
+        self.localization = localization
         self.initUI()
         self.serie_mode = False
         self.serieFonction_mode = False
+        self.expression_error = False
 
     def initUI(self):
         layout = QVBoxLayout(self)
@@ -35,20 +39,20 @@ class ExpressionInputer(QWidget):
             layout.addLayout(buttons_layout_temp)
             
         checkboxes = QHBoxLayout()
-        self.checkbox = QCheckBox('级数模式', self)
+        self.checkbox = QCheckBox(self.localization['serie_mode'], self)
         self.checkbox.stateChanged.connect(self._serie_mode)
         checkboxes.addWidget(self.checkbox)
 
-        self.checkbox3 = QCheckBox('函数列模式',self)
+        self.checkbox3 = QCheckBox(self.localization['serieFonction_mode'],self)
         self.checkbox3.stateChanged.connect(self._serieFonction_mode)
         checkboxes.addWidget(self.checkbox3)
 
-        self.checkbox2 = QCheckBox('更多表达式',self)
+        self.checkbox2 = QCheckBox(self.localization['more_expression'],self)
         self.checkbox2.stateChanged.connect(self._change_buttons)
         checkboxes.addWidget(self.checkbox2)
         layout.addLayout(checkboxes)
 
-        self.submit = QPushButton('提交', self)
+        self.submit = QPushButton(self.localization['submit_button'], self)
         self.submit.clicked.connect(self._submit)
         layout.addWidget(self.submit)
 
@@ -59,11 +63,18 @@ class ExpressionInputer(QWidget):
             self.serie_mode = False
         self._send_to_render(self.inputer.text())
         
-        self.trendline_checkbox_signal.emit(not self.serie_mode)
+        self.serie_mode_signal.emit(self.serie_mode)
 
 
     def _serieFonction_mode(self,state):
         # self.inputer.clear()
+        # print('_serieFonction_mode excuted')
+        # print('curr mode is',self.serieFonction_mode)
+        text = self.inputer.text()
+        if 'I' in text:
+            QMessageBox.warning(self, self.localization['msg_warning'], self.localization['msg_complexError'])
+            self.checkbox3.setChecked(False)
+            return
         if state == Qt.CheckState.Checked.value:
             self.serieFonction_mode = True
         else:
@@ -128,10 +139,14 @@ class ExpressionInputer(QWidget):
         
 
     def _send_to_render(self, text: str):
+        # print(text)
         try:
+            self.expression_error = has_illegal_variables(text,self.serieFonction_mode)
+            # print(self.expression_error)
             text = self._latex_expression_generator(text)[0]
             self.expression_changed_signal_render.emit(text)
         except Exception as e:
+            self.expression_error = True
             self.expression_changed_signal_render_error.emit(str(e))
 
 
@@ -160,24 +175,35 @@ class ExpressionInputer(QWidget):
         self.inputer.setText(new_text)
 
     def _submit(self):
-        if not self.serie_mode:
-            self.trendline_checkbox_signal.emit(True)
-        else:
-            self.trendline_checkbox_signal.emit(False)
+        if self.expression_error:
+            QMessageBox.warning(self, self.localization['msg_warning'], self.localization['msg_expressionError'])
+            return
         text = self.inputer.text()
         text_LIST = self._latex_expression_generator(text)
         # print(text_LIST)
+        if 'I' in text:
+            self.complex_mode_signal.emit(True)
+            # print('complex mod on')
+        else:
+            self.complex_mode_signal.emit(False)
+            # print('complex mode off')
+        
+        if  self.serie_mode:
+            self.serie_mode_signal.emit(True)
+        else:
+            self.serie_mode_signal.emit(False)
+
         if self.serieFonction_mode:
             self.serieFonction_mode_signal.emit(self.serieFonction_mode)
 
-        if 'I' in text:
-            self.complex_mode_signal.emit(True)
-            print('complex mod on')
-        else:
-            self.complex_mode_signal.emit(False)
-            print('complex mode off')
-        
         self.expression_changed_signal_displayer.emit(text_LIST)
+
+    def update_texts(self, localization):
+        self.localization = localization
+        self.checkbox.setText(self.localization['serie_mode'])
+        self.checkbox3.setText(self.localization['serieFonction_mode'])
+        self.checkbox2.setText(self.localization['more_expression'])
+        self.submit.setText(self.localization['submit_button'])
 
 
 def main():
