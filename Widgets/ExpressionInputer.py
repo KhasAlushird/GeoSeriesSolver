@@ -1,12 +1,13 @@
 import sys
 from PyQt6.QtWidgets import (QLabel, QLineEdit,QHBoxLayout, QApplication, QWidget, QCheckBox, 
-                             QVBoxLayout, QMessageBox,QPushButton)
+                             QVBoxLayout, QMessageBox,QPushButton,QStackedWidget)
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from sympy import latex,simplify
 from PyQt6.QtCore import Qt
 import re
 from Resources.Helpers import has_illegal_variables
+from PyQt6.QtWidgets import QSpacerItem, QSizePolicy
 
 class ExpressionInputer(QWidget):
     expression_changed_signal_displayer = pyqtSignal(list)  # 发送给ImageDisplayer,格式为[latex_expression,sympy_expression]
@@ -14,6 +15,7 @@ class ExpressionInputer(QWidget):
     expression_changed_signal_render_error = pyqtSignal(str)
     serie_mode_signal = pyqtSignal(bool)
     serieFonction_mode_signal = pyqtSignal(bool)
+    dom_of_def_signal = pyqtSignal(str)
     complex_mode_signal = pyqtSignal(bool)
 
     def __init__(self,localization):
@@ -26,9 +28,36 @@ class ExpressionInputer(QWidget):
 
     def initUI(self):
         layout = QVBoxLayout(self)
-        self.inputer = QLineEdit(self)
-        self.inputer.textChanged[str].connect(self._send_to_render)
-        layout.addWidget(self.inputer)
+        self.normal_inputer = QLineEdit(self)
+        self.normal_inputer.textChanged[str].connect(self._send_to_render)
+        self.function_inputer = QLineEdit(self)
+        self.function_inputer.setMinimumHeight(30) 
+        self.function_inputer.textChanged[str].connect(self._send_to_render)
+        self.inputer = self.normal_inputer
+
+        self.range_inputer_label = QLabel(self.localization['range_inputer'],self)
+        self.range_inputer = QLineEdit(self)
+        self.range_inputer.setMinimumHeight(30) 
+        self.range_inputer.setPlaceholderText("(-E,pi]")
+
+         # 将函数模式的 inputer 和 range_inputer 放在一个水平布局中
+        self.function_layout = QHBoxLayout()
+        self.function_layout.setContentsMargins(0, 0, 0, 0)  # 设置布局的边距
+        self.function_layout.setSpacing(0)
+        self.function_layout.addWidget(self.function_inputer,stretch=3)
+        self.function_layout.addWidget(self.range_inputer_label)
+        self.function_layout.addWidget(self.range_inputer,stretch=1)
+
+
+        # 创建一个 QWidget 来包含函数模式的布局
+        self.function_widget = QWidget()
+        self.function_widget.setLayout(self.function_layout)
+
+        self.stacked_inputer = QStackedWidget(self)
+        self.stacked_inputer.addWidget(self.normal_inputer)
+        self.stacked_inputer.addWidget(self.function_widget)
+        self.stacked_inputer.setFixedHeight(30)
+        layout.addWidget(self.stacked_inputer)
 
 
         self.buttons = self._buttons_generator()
@@ -77,8 +106,12 @@ class ExpressionInputer(QWidget):
             return
         if state == Qt.CheckState.Checked.value:
             self.serieFonction_mode = True
+            self.stacked_inputer.setCurrentIndex(1)
+            self.inputer = self.function_inputer
         else:
             self.serieFonction_mode = False
+            self.stacked_inputer.setCurrentIndex(0)
+            self.inputer = self.normal_inputer
 
         self._send_to_render(self.inputer.text())
 
@@ -175,10 +208,10 @@ class ExpressionInputer(QWidget):
         self.inputer.setText(new_text)
 
     def _submit(self):
-        if self.expression_error:
+        text = self.inputer.text()
+        if self.expression_error or (not text):
             QMessageBox.warning(self, self.localization['msg_warning'], self.localization['msg_expressionError'])
             return
-        text = self.inputer.text()
         text_LIST = self._latex_expression_generator(text)
         # print(text_LIST)
         if 'I' in text:
@@ -195,6 +228,7 @@ class ExpressionInputer(QWidget):
 
         if self.serieFonction_mode:
             self.serieFonction_mode_signal.emit(self.serieFonction_mode)
+            self.dom_of_def_signal.emit(self.range_inputer.text())
 
         self.expression_changed_signal_displayer.emit(text_LIST)
 
@@ -204,6 +238,7 @@ class ExpressionInputer(QWidget):
         self.checkbox3.setText(self.localization['serieFonction_mode'])
         self.checkbox2.setText(self.localization['more_expression'])
         self.submit.setText(self.localization['submit_button'])
+        self.range_inputer_label.setText(self.localization['range_inputer'])
 
 
 def main():

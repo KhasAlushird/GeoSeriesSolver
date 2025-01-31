@@ -65,13 +65,62 @@ def serie_calculer(expression,range_mode)->list:
         result.append(val)
     return result
 
-def serieFonction_calculer(expression,n,serie_mode:bool)->list:
+def function_range_getter(fonction_range:str)->list:
+    '''
+    返回形式[左数值,是否开区间,右数值,是否开区间]
+    '''
+    try:
+        # 解析 fonction_range
+        left, right = fonction_range.split(',')
+        left = left.strip()
+        right = right.strip()
+
+        # 处理左边界
+        if left[0] == '(':
+            left_open = True
+            left_value = left[1:]
+        elif left[0] == '[':
+            left_open = False
+            left_value = left[1:]
+        else:
+            raise ValueError("Invalid range format")
+
+        # 处理右边界
+        if right[-1] == ')':
+            right_open = True
+            right_value = right[:-1]
+        elif right[-1] == ']':
+            right_open = False
+            right_value = right[:-1]
+        else:
+            raise ValueError("Invalid range format")
+
+        # 将边界值转换为数值
+        left_value = eval(left_value.replace('E', 'np.e').replace('pi', 'np.pi'))
+        right_value = eval(right_value.replace('E', 'np.e').replace('pi', 'np.pi'))
+
+        result = [left_value, left_open, right_value, right_open]
+        return result
+
+    except Exception as e:
+        return['error']
+
+
+def serieFonction_calculer(expression,n,serie_mode:bool,function_range:list)->list:
     '''
     返回形式：[if invalid n ,x_points,y_points]
     '''
     error_count = 0
     error_flag_final = False
-    x_points = np.linspace(0, 100, 400)
+    left_value, left_open, right_value, right_open = function_range
+    x_points = np.linspace(left_value, right_value, 400)
+    if left_open:
+        x_points = x_points[x_points > left_value]
+    if right_open:
+        x_points = x_points[x_points < right_value]
+
+    x_points_num = len(x_points)
+
     y_points = []
 
     
@@ -107,7 +156,7 @@ def serieFonction_calculer(expression,n,serie_mode:bool)->list:
                 if not error_flag:
                     y_points = y_points_curr
                 else:
-                    y_points = [y*0 for y in range(0,401)]
+                    y_points = [y*0 for y in range(0,x_points_num+1)]
             else:
                 if not error_flag:
                     y_points = [y + y_curr for y,y_curr in zip(y_points,y_points_curr)]

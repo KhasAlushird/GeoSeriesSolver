@@ -17,8 +17,9 @@ from sympy import (latex, simplify, sin, cos, tan,
 
 
 class PlotCanvas(FigureCanvas):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None,localization = None):
         fig, self.ax = plt.subplots()
+        self.localization = localization
         super().__init__(fig)
         self.setParent(parent)
         self.show_line = False
@@ -33,6 +34,7 @@ class PlotCanvas(FigureCanvas):
         self.expression = 'n**2'
         self.latex_expression = r'$n^2$'
         self.curr_n_for_serieFonction = 1
+        self.function_range = [0,False,10,False]
         self.plot()
 
     def clear_plot(self):
@@ -93,18 +95,28 @@ class PlotCanvas(FigureCanvas):
 
     def _fonction_scatter(self):
         # print('execute serie fonction calculer')
-        result = serieFonction_calculer(self.expression,self.curr_n_for_serieFonction,self.serie_mode)
+        result = serieFonction_calculer(self.expression,self.curr_n_for_serieFonction,self.serie_mode,self.function_range)
         if result[0]:
-            QMessageBox.warning(self, "警告", "存在无定义的点")
+            QMessageBox.warning(self, self.localization['msg_warning'], self.localization['msg_undef'])
         
         x_points = result[1]
         y_points = result[2]
-        self.ax.set_xticks(np.arange(0, 101, 10))
+
+        right_val  = self.function_range[0]
+        left_val = self.function_range[2]
+        step = (right_val - left_val) / 10
+        self.ax.set_xticks(np.arange(left_val, right_val + step, step))
         if not self.compare_mode:
             self.ax.plot(x_points, y_points, color='blue')
         else:
             r_g_b_tuple = Grandiant_color(self.range_mode,self.curr_n_for_serieFonction)
             self.ax.plot(x_points,y_points,color = r_g_b_tuple)
+
+     
+        if self.function_range[1]:
+            self.ax.scatter([x_points[0]], [y_points[0]], edgecolor='b', facecolor='none', s=26)
+        if self.function_range[3]:
+            self.ax.scatter([x_points[-1]], [y_points[-1]], edgecolor='b', facecolor='none', s=26)
         if self.show_value:
             step = 50
             #注：enumerate(zip(x_points, y_points))每个元素形如 i,(x,y)
@@ -114,11 +126,9 @@ class PlotCanvas(FigureCanvas):
                     if np.isfinite(float(y)):  # 仅为有效点添加标签
                         self.ax.annotate(f'({x1:.1f}, {y:.1f})', (x1, y), textcoords="offset points", xytext=(0, 10), ha='center')
 
-
-
-
-
-
+   
+    def update_texts(self,localization):
+        self.localization = localization
 
     def _point_scatter(self, range_mode):
         if range_mode == '0-10':
@@ -146,7 +156,9 @@ class PlotCanvas(FigureCanvas):
                 try:
                     y_points.append(F(n))
                 except:
-                    QMessageBox.warning(self, "警告", f"点{n}无定义")
+                    msg1 = self.localization['msg_point']
+                    msg2 = self.localization['msg_undef_point']
+                    QMessageBox.warning(self, self.localization['msg_warning'], f'{msg1} {n} {msg2}')
                     return
 
             else:
@@ -204,6 +216,9 @@ class PlotCanvas(FigureCanvas):
 
                 
         if self.have_error and not self.have_warned_for_nan:
-            QMessageBox.warning(self, "警告", "存在无定义的点")
+            QMessageBox.warning(self, self.localization['msg_warning'] , self.localization['msg_undef'])
             self.have_warned_for_nan = True
+
+
+        
 

@@ -100,8 +100,9 @@ class PythonHighlighter(QSyntaxHighlighter):
                         self.setFormat(i, 1, format)
 
 class CodeEditor(QPlainTextEdit):
-    def __init__(self):
+    def __init__(self,localization):
         super().__init__()
+        self.localization = localization
         self.setStyleSheet("background-color: rgb(31, 31, 31); color: rgb(136, 215, 252);")
         self.setFont(QFont("Arial", 12, QFont.Weight.Bold))
         self.highlighter = PythonHighlighter(self.document())
@@ -160,40 +161,48 @@ def output_latex():
         code = self.toPlainText()
         try:
             ast.parse(code)
-            self.parent().syntax_label.setText("语法正确")
+            self.parent().syntax_label.setText(self.localization['syntax_correct'])
             self.have_error = False
             self.parent().syntax_label.setStyleSheet("color: green;")
         except SyntaxError as e:
-            self.parent().syntax_label.setText(f"存在语法错误: {e}")
+            self.parent().syntax_label.setText(self.localization['syntax_error']+f": {e}")
             self.have_error = True
             self.parent().syntax_label.setStyleSheet("color: red;")
+
 
 class PythonEditor(QWidget):
     code_text = pyqtSignal(str)
     advanced_mode_signal = pyqtSignal()
     
-    def __init__(self):
+    def __init__(self,localization):
         super().__init__()
+        self.localization = localization
         self.initUI()
     
     def initUI(self):
-        self.editor = CodeEditor()
+        self.editor = CodeEditor(self.localization)
         layout = QVBoxLayout(self)
         layout.addWidget(self.editor)   
-        self.submit_button = QPushButton('提交', self)
+        self.submit_button = QPushButton(self.localization['submit_button'], self)
         self.submit_button.clicked.connect(self._submit)
-        self.syntax_label = QLabel("语法检查")
+        self.syntax_label = QLabel(self.localization['syntax_check'], self)
         self.syntax_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.syntax_label)
         layout.addWidget(self.submit_button)
 
+    def update_texts(self, localization):
+        self.localization = localization
+        self.editor.localization = localization
+        self.submit_button.setText(self.localization['submit_button'])
+        self.syntax_label.setText(self.localization['syntax_check'])
+
     def _submit(self):
         if self.editor.have_error:
-            QMessageBox.warning(self, "警告", "存在语法错误")
+            QMessageBox.warning(self, self.localization['msg_warning'], self.localization['syntax_error'])
             return
         code = self.editor.toPlainText()
         if not re.search(r'def\s+F\s*\(', code):
-            QMessageBox.warning(self, "警告", "'F'函数缺失")
+            QMessageBox.warning(self, self.localization['msg_warning'], self.localization['msg_F_missing'])
             return
         current_dir = os.path.dirname(os.path.abspath(__file__))
         file_path = os.path.join(current_dir, '..', 'Resources', '_temp_code.py')
@@ -203,7 +212,6 @@ class PythonEditor(QWidget):
         self.code_text.emit(output_latex())
         self.advanced_mode_signal.emit()
         # print(output_latex())
-    
 
 
         

@@ -13,6 +13,7 @@ import math
 
 from Resources.PlotCanvas import PlotCanvas
 from Resources.PolarPlotCanvas import PolarPlotCanvas
+from Resources.Helpers import function_range_getter
 
 class ImageDisplayer(QWidget):
     def __init__(self,localization, parent=None):
@@ -21,9 +22,10 @@ class ImageDisplayer(QWidget):
         self.initUI()
 
     def initUI(self):
+        self.complex_mode = False
         layout = QVBoxLayout(self)
-        self.plot_canvas = PlotCanvas(self)
-        self.polar_canvas = PolarPlotCanvas(self)
+        self.plot_canvas = PlotCanvas(self,self.localization['plot_canvas'])
+        self.polar_canvas = PolarPlotCanvas(self,self.localization['polar_canvas'])
         self.current_canvas = self.plot_canvas
         self.stacked_canvas = QStackedWidget()
         self.stacked_canvas.addWidget(self.plot_canvas)
@@ -140,12 +142,23 @@ class ImageDisplayer(QWidget):
     def set_expression_for_canvas(self,text_list:list):
         self.current_canvas.set_expression(text_list)
 
+    def set_dom_of_def(self,range_text:str):
+        range_list = function_range_getter(range_text)
+        if range_list[0] == 'error':
+            QMessageBox.warning(self, self.localization['msg_warning'],self.localization['msg_rangeError'])
+            return
+        self.plot_canvas.function_range = range_list
+
 
     def change_serie_mode(self, serie_mode:bool):
-        self.checkbox.setEnabled(not serie_mode)
+        if not self.complex_mode:
+            self.checkbox.setEnabled(not serie_mode)
         self.current_canvas.serie_mode = serie_mode
 
     def change_advance_mode(self,advance_mode:bool):
+        if advance_mode:
+            self.stacked_canvas.setCurrentIndex(0)
+            self.current_canvas = self.plot_canvas
         self.checkbox.setEnabled(not advance_mode)
         self.plot_canvas.advanced_mode = advance_mode
 
@@ -172,17 +185,19 @@ class ImageDisplayer(QWidget):
             self.checkbox3.setChecked(False)
 
     def change_complex_mode(self,complex_mode:bool):
+        self.complex_mode = complex_mode
         if complex_mode:
             self.stacked_canvas.setCurrentIndex(1)
             self.current_canvas = self.polar_canvas
             self.checkbox2.setEnabled(False)
             self.checkbox.setEnabled(False)
+            # print(self.checkbox.isEnabled())
             # print('curr canvas is: polar')
         else:
             self.stacked_canvas.setCurrentIndex(0)
             self.current_canvas = self.plot_canvas
             self.checkbox2.setEnabled(True)
-            self.checkbox.setEnabled(False)
+            self.checkbox.setEnabled(True)
 
     
     #这一步仅是判断趋势线是否有定义的算法，具体趋势线的绘制在plot里面
@@ -261,6 +276,9 @@ class ImageDisplayer(QWidget):
         self.slider_label.setText(self.localization['slider_label'])
         self.submit_button_for_n.setText(self.localization['submit_button'])
         self.submit_button_for_n_label.setText(self.localization['input_n'])
+
+        self.plot_canvas.update_texts(self.localization['plot_canvas'])
+        self.polar_canvas.update_texts(self.localization['polar_canvas'])
 
 
     def _slider_value_changed(self, value):

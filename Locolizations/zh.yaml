@@ -6,6 +6,7 @@ main_window:
   normal_mode: "普通模式"
 
 expression_inputer:
+  range_inputer: "定义域:"
   serie_mode: "级数模式"
   serieFonction_mode: "函数列模式"
   more_expression: "更多表达式"
@@ -27,3 +28,28 @@ image_displayer:
   msg_warning: "警告"
   msg_trendline: "趋势线无定义"
   msg_nError: "n必须为0-100内的整数"
+  msg_rangeError: "定义域格式错误! (表示开区间,[表示闭区间 "
+  plot_canvas:
+    msg_warning: "警告"
+    msg_undef: "存在无定义的点"
+    msg_point: "点"
+    msg_undef_point: "无定义"
+  polar_canvas:
+    msg_warning: "警告"
+    msg_undef: "存在无定义的点"
+    msg_point: "点"
+    msg_undef_point: "无定义"
+    msg_hint: "提示"
+    msg_getVal: "点击蓝点获取数列值"
+
+python_editor:
+  syntax_correct: "语法正确"
+  syntax_error: "存在语法错误"
+  submit_button: "提交"
+  syntax_check: "语法检查"
+  msg_warning: "警告"
+  msg_F_missing: "函数F未定义"
+
+
+
+  

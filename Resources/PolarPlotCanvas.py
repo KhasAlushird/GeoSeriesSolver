@@ -12,7 +12,8 @@ from sympy import (latex, simplify, sin, cos, tan,
                    sinh, cosh, tanh, sqrt, log, factorial)
 
 class PolarPlotCanvas(FigureCanvas):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None,localization = None):
+        self.localization = localization
         fig = Figure()
         self.ax = fig.add_subplot(111, projection='polar')
         super().__init__(fig)
@@ -55,12 +56,15 @@ class PolarPlotCanvas(FigureCanvas):
         self._complex_scatter()
         self.draw()
 
+    def update_texts(self,localization):
+        self.localization = localization
+
     def _complex_scatter(self):
         # print('curr serie mode is',self.serie_mode)
         have_error = False
         self.have_warned_for_showValue +=1
         if self.have_warned_for_showValue ==2:
-            QMessageBox.information(self, "提示", "可以点击蓝点获取数列值")
+            QMessageBox.information(self, self.localization['msg_hint'], self.localization['msg_getVal'])
         if self.range_mode == '0-10':     
             n_points = np.arange(0, 11)
         elif self.range_mode == '0-50':
@@ -104,7 +108,7 @@ class PolarPlotCanvas(FigureCanvas):
         self.thetas = theta
         self.rs = r
         if have_error:
-            QMessageBox.warning(self, "警告", "存在无定义的点")
+            QMessageBox.warning(self, self.localization['msg_warning'], self.localization['msg_undef'])
 
     def on_click(self, event):
         if event.inaxes == self.ax:

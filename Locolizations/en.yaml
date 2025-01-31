@@ -6,6 +6,7 @@ main_window:
   normal_mode: "Normal Mode"
 
 expression_inputer:
+  range_inputer: "Domain:"
   serie_mode: "Series Mode"
   serieFonction_mode: "Function Series Mode"
   more_expression: "More Expressions"
@@ -27,3 +28,28 @@ image_displayer:
   msg_warning: "Warning"
   msg_trendline: "Trend line is undefined"
   msg_nError: "n must be an integer between 0 and 100"
+  msg_rangeError: "Invalid domain format! ( represents open interval, [ represents closed interval"
+  plot_canvas:
+    msg_warning: "Warning"
+    msg_undef: "There are undefined points"
+    msg_point: "Point"
+    msg_undef_point: "is Undefined"
+    msg_hint: "Hint"
+    msg_getVal: "Click the blue point to get the series value"
+  polar_canvas:
+    msg_warning: "Warning"
+    msg_undef: "There are undefined points"
+    msg_point: "Point"
+    msg_undef_point: "Undefined"
+    msg_hint: "Hint"
+    msg_getVal: "Click the blue point to get the series value"
+
+
+
+python_editor:
+  syntax_correct: "Syntax Correct"
+  syntax_error: "Syntax Error"
+  submit_button: "Submit"
+  syntax_check: "Syntax Check"
+  msg_warning: "Warning"
+  msg_F_missing: "Function F is not defined"

@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
 
         # 基本组件
         self.expression_inputer = ExpressionInputer(self.localization['expression_inputer'])
-        self.python_editor = PythonEditor()
+        self.python_editor = PythonEditor(self.localization['python_editor'])
         self.image_displayer = ImageDisplayer(self.localization['image_displayer'])
         self.latex_render = LatexRender()
 
@@ -60,6 +60,7 @@ class MainWindow(QMainWindow):
         self.expression_inputer.serie_mode_signal.connect(self.image_displayer.change_serie_mode)
         self.expression_inputer.serieFonction_mode_signal.connect(self.image_displayer.change_serieFonction_mode)
         self.expression_inputer.complex_mode_signal.connect(self.image_displayer.change_complex_mode)
+        self.expression_inputer.dom_of_def_signal.connect(self.image_displayer.set_dom_of_def)
 
         self.python_editor.code_text.connect(self.latex_render.render)
         self.python_editor.advanced_mode_signal.connect(self.image_displayer.plot_canvas.plot)
@@ -69,13 +70,21 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout(central_widget)  # 使用 QHBoxLayout 进行左右布局
 
         layout_left = QVBoxLayout()
-        layout_left.addWidget(self.latex_render)
-        layout_left.addWidget(self.stacked_widget)
+        # layout_left.addWidget(self.latex_render)
+        # layout_left.addWidget(self.stacked_widget)
         self.latex_render.setSizePolicy(QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding))
         self.stacked_widget.setSizePolicy(QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.MinimumExpanding))
+        left_splitter = QSplitter(Qt.Orientation.Vertical)
+        left_splitter.setStyleSheet("QSplitter::handle { background-color: lightgray; }")
+        left_splitter.addWidget(self.latex_render)
+        left_splitter.addWidget(self.stacked_widget)
+        left_splitter.setSizes([245, 100]) 
+
+        layout_left.addWidget(left_splitter)
 
         left_widget = QWidget()
         left_widget.setLayout(layout_left)
+    
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(left_widget)
@@ -124,6 +133,7 @@ class MainWindow(QMainWindow):
         #子组件的本地化
         self.expression_inputer.update_texts(self.localization['expression_inputer'])
         self.image_displayer.update_texts(self.localization['image_displayer'])
+        self.python_editor.update_texts(self.localization['python_editor'])
 
 def main():
     app = QApplication(sys.argv)
