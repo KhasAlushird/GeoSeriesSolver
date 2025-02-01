@@ -71,7 +71,7 @@ class ImageDisplayer(QWidget):
         self.slider = QSlider(Qt.Orientation.Horizontal)
         self.slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.slider.setTickInterval(1)
-        self.slider.setRange(0, 10)
+        self.slider.setRange(0, 9)
         self.slider.valueChanged.connect(self._slider_value_changed)
         self.slider_label = QLabel(self.localization['slider_label'],self)
 
@@ -140,6 +140,7 @@ class ImageDisplayer(QWidget):
         
 
     def set_expression_for_canvas(self,text_list:list):
+        self.change_compare_mode(False)
         self.current_canvas.set_expression(text_list)
 
     def set_dom_of_def(self,range_text:str):
@@ -178,11 +179,15 @@ class ImageDisplayer(QWidget):
             self.plot_canvas.compare_mode = True
             self.stacked_widget.setCurrentIndex(2)
             self.checkbox3_2.setChecked(True)
+            self.plot_canvas.plot()
 
         else:
-            self.plot_canvas.compare_mode = False
-            self.stacked_widget.setCurrentIndex(1)
-            self.checkbox3.setChecked(False)
+            if self.plot_canvas.serieFonction_mode:
+                self.plot_canvas.compare_mode = False
+                self.stacked_widget.setCurrentIndex(1)
+                self.checkbox3.setChecked(False)
+            else:
+                self.stacked_widget.setCurrentIndex(0)
 
     def change_complex_mode(self,complex_mode:bool):
         self.complex_mode = complex_mode
@@ -236,12 +241,12 @@ class ImageDisplayer(QWidget):
 
     def _set_variable_range(self, text):
         self.current_canvas.range_mode = text
-        if text == '0-10':
-            self.slider.setRange(0, 10)
-        elif text == '0-50':
-            self.slider.setRange(0, 50)
-        elif text == '0-100':
-            self.slider.setRange(0, 100)
+        # if text == '0-10':
+        #     self.slider.setRange(0, 10)
+        # elif text == '0-50':
+        #     self.slider.setRange(0, 50)
+        # elif text == '0-100':
+        #     self.slider.setRange(0, 100)
         self.current_canvas.plot()
 
     def _submit_curr_n(self):
@@ -282,11 +287,13 @@ class ImageDisplayer(QWidget):
 
 
     def _slider_value_changed(self, value):
-        self.plot_canvas.curr_n_for_serieFonction = value
-        self.plot_canvas.plot()
+        # self.plot_canvas.curr_n_for_serieFonction = value
+        # self.plot_canvas.plot()
+        self.plot_canvas.draw_vertical_line(value)
+        # print('slider value changed',value)
 
     def _clear_plot(self):
-        self.plot_canvas.clear_plot()
+        self.plot_canvas.clear_vertical_lines()
         # print('clear_plot execute')
 
 def main():

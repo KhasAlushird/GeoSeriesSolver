@@ -22,7 +22,7 @@ image_displayer:
   compare_mode: "Mode de comparaison"
   show_func_val: "Afficher la valeur de la fonction"
   clear: "Effacer"
-  slider_label: "Faites glisser pour changer la valeur de n :"
+  slider_label: "Faites glisser pour dessiner une ligne de comparaison:"
   submit_button: "Soumettre"
   input_n: "Entrer n"
   msg_warning: "Avertissement"

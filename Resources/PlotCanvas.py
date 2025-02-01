@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.collections import PathCollection
 from PyQt6.QtWidgets import QMessageBox
 import os
 import importlib
@@ -34,6 +35,9 @@ class PlotCanvas(FigureCanvas):
         self.expression = 'n**2'
         self.latex_expression = r'$n^2$'
         self.curr_n_for_serieFonction = 1
+        # self.curr_x_for_vertical = 1
+        self.ten_x_points = []
+        self.ten_y_points = [[],[],[],[],[],[],[],[],[],[]]
         self.function_range = [0,False,10,False]
         self.plot()
 
@@ -61,8 +65,9 @@ class PlotCanvas(FigureCanvas):
         return F
     
     def plot(self):
-        if not self.compare_mode:
-            self.ax.clear()
+        # if not self.compare_mode:
+        #     self.ax.clear()
+        self.ax.clear()
         if self.advanced_mode:
             self.ax.set_title('F(n)')
             self.ax.set_ylabel('F(n)', fontsize=14, rotation=0)
@@ -95,28 +100,56 @@ class PlotCanvas(FigureCanvas):
 
     def _fonction_scatter(self):
         # print('execute serie fonction calculer')
-        result = serieFonction_calculer(self.expression,self.curr_n_for_serieFonction,self.serie_mode,self.function_range)
-        if result[0]:
-            QMessageBox.warning(self, self.localization['msg_warning'], self.localization['msg_undef'])
-        
-        x_points = result[1]
-        y_points = result[2]
+        left_val, left_open, right_val, right_open = self.function_range
+        x_points = np.linspace(left_val, right_val, 400)
 
-        right_val  = self.function_range[0]
-        left_val = self.function_range[2]
+        if left_open:
+            x_points = x_points[x_points > left_val]
+        if right_open:
+            x_points = x_points[x_points < right_val]
+
+       
+        
+        # right_val  = self.function_range[0]
+        # left_val = self.function_range[2]
         step = (right_val - left_val) / 10
         self.ax.set_xticks(np.arange(left_val, right_val + step, step))
-        if not self.compare_mode:
-            self.ax.plot(x_points, y_points, color='blue')
-        else:
-            r_g_b_tuple = Grandiant_color(self.range_mode,self.curr_n_for_serieFonction)
-            self.ax.plot(x_points,y_points,color = r_g_b_tuple)
 
+        if self.compare_mode:
+            indices = np.linspace(0, len(x_points) - 1, 10).astype(int)
+            self.ten_x_points = [x_points[i] for i in indices]
+            self.ten_y_points = [[],[],[],[],[],[],[],[],[],[]]
+            for n in range(1, int(self.range_mode.split('-')[1]) + 1):
+                result = serieFonction_calculer(self.expression, n, self.serie_mode, x_points)
+                if result[0]:
+                    QMessageBox.warning(self, self.localization['msg_warning'], self.localization['msg_undef'])
+                    return
+                
+                x_points = result[1]
+                y_points = result[2]
+                ten_y_points = result[3]
+                for i in range(10):
+                    self.ten_y_points[i].append(ten_y_points[i])
+                r_g_b_tuple = Grandiant_color(self.range_mode, n)
+                self.ax.plot(x_points, y_points, color=r_g_b_tuple)
+                
+
+            self.draw_vertical_line(0)
+
+
+        else:
+            result = serieFonction_calculer(self.expression,self.curr_n_for_serieFonction,self.serie_mode,x_points)
+            if result[0]:
+                QMessageBox.warning(self, self.localization['msg_warning'], self.localization['msg_undef'])
+        
+            x_points = result[1]
+            y_points = result[2]
+            self.ax.plot(x_points, y_points, color='blue')
+            if self.function_range[1]:
+                self.ax.scatter([x_points[0]], [y_points[0]], edgecolor='b', facecolor='none', s=26)
+            if self.function_range[3]:
+                self.ax.scatter([x_points[-1]], [y_points[-1]], edgecolor='b', facecolor='none', s=26)
      
-        if self.function_range[1]:
-            self.ax.scatter([x_points[0]], [y_points[0]], edgecolor='b', facecolor='none', s=26)
-        if self.function_range[3]:
-            self.ax.scatter([x_points[-1]], [y_points[-1]], edgecolor='b', facecolor='none', s=26)
         if self.show_value:
             step = 50
             #注：enumerate(zip(x_points, y_points))每个元素形如 i,(x,y)
@@ -126,7 +159,30 @@ class PlotCanvas(FigureCanvas):
                     if np.isfinite(float(y)):  # 仅为有效点添加标签
                         self.ax.annotate(f'({x1:.1f}, {y:.1f})', (x1, y), textcoords="offset points", xytext=(0, 10), ha='center')
 
-   
+    def draw_vertical_line(self,curr_index_x:int):
+        # print('curr index is',curr_index_x)
+        if self.range_mode == '0-10':
+            s_size = 30
+        elif self.range_mode == '0-50':
+            s_size = 18
+        else:
+            s_size = 11
+        # print('curr y is ',self.ten_y_points[curr_index_x])
+        for y_val in self.ten_y_points[curr_index_x]:
+            self.ax.scatter([self.ten_x_points[curr_index_x]], [y_val], color='green', s=s_size,alpha=0.7)
+        self.ax.axvline(x=self.ten_x_points[curr_index_x], color='green', linestyle='-',alpha=0.5)
+
+        self.draw()
+
+    def clear_vertical_lines(self):
+        for line in self.ax.get_lines():
+            if line.get_linestyle() == '-' and line.get_color() == (0.0, 1.0, 0.0, 0.5):
+                line.remove()
+        for collection in self.ax.collections:
+            if isinstance(collection,PathCollection):
+                collection.remove()
+        self.draw()
+
     def update_texts(self,localization):
         self.localization = localization
 

@@ -22,7 +22,7 @@ image_displayer:
   compare_mode: "Compare Mode"
   show_func_val: "Show Function Value"
   clear: "Clear"
-  slider_label: "Slide to change n value:"
+  slider_label: "Slide to draw comparison line:"
   submit_button: "Submit"
   input_n: "Input n"
   msg_warning: "Warning"

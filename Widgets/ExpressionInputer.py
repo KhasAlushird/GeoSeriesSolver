@@ -225,10 +225,12 @@ class ExpressionInputer(QWidget):
             self.serie_mode_signal.emit(True)
         else:
             self.serie_mode_signal.emit(False)
+        
+        self.serieFonction_mode_signal.emit(self.serieFonction_mode)
 
         if self.serieFonction_mode:
-            self.serieFonction_mode_signal.emit(self.serieFonction_mode)
             self.dom_of_def_signal.emit(self.range_inputer.text())
+
 
         self.expression_changed_signal_displayer.emit(text_LIST)
 

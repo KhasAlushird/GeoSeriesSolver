@@ -22,7 +22,7 @@ image_displayer:
   compare_mode: "对比模式"
   show_func_val: "显示函数值"
   clear: "清除"
-  slider_label: "滑动改变n的大小:"
+  slider_label: "滑动绘制对比线:"
   submit_button: "提交"
   input_n: "输入n"
   msg_warning: "警告"

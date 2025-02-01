@@ -94,10 +94,13 @@ def function_range_getter(fonction_range:str)->list:
             right_value = right[:-1]
         else:
             raise ValueError("Invalid range format")
-
+        
         # 将边界值转换为数值
         left_value = eval(left_value.replace('E', 'np.e').replace('pi', 'np.pi'))
         right_value = eval(right_value.replace('E', 'np.e').replace('pi', 'np.pi'))
+
+        if left_value>right_value:
+            raise ValueError("Invalid range format")
 
         result = [left_value, left_open, right_value, right_open]
         return result
@@ -106,23 +109,18 @@ def function_range_getter(fonction_range:str)->list:
         return['error']
 
 
-def serieFonction_calculer(expression,n,serie_mode:bool,function_range:list)->list:
+def serieFonction_calculer(expression,n,serie_mode:bool,x_points:list)->list:
     '''
-    返回形式：[if invalid n ,x_points,y_points]
+    返回形式：[if invalid n ,x_points,y_points,[ten_y_points]]
     '''
     error_count = 0
     error_flag_final = False
-    left_value, left_open, right_value, right_open = function_range
-    x_points = np.linspace(left_value, right_value, 400)
-    if left_open:
-        x_points = x_points[x_points > left_value]
-    if right_open:
-        x_points = x_points[x_points < right_value]
+
 
     x_points_num = len(x_points)
 
     y_points = []
-
+    ten_y_points = []
     
     if not serie_mode:
         for x in x_points:
@@ -132,6 +130,7 @@ def serieFonction_calculer(expression,n,serie_mode:bool,function_range:list)->li
                 error_count += 1
                 val = np.nan
             y_points.append(val)
+
 
     else:
         n_points = np.arange(0, n+1)
@@ -165,10 +164,14 @@ def serieFonction_calculer(expression,n,serie_mode:bool,function_range:list)->li
     if error_count >= 200:
         error_flag_final = True
 
+    indices = np.linspace(0, len(x_points) - 1, 10).astype(int)
+
+    ten_y_points = [y_points[i] for i in indices]
+
     if error_flag_final:
-        return [True, x_points, y_points]  
+        return [True, x_points, y_points,ten_y_points]  
     else:   
-        return [False, x_points, y_points]
+        return [False, x_points, y_points,ten_y_points]
 
 
 class LineNumberArea(QWidget):
