@@ -1,4 +1,4 @@
-# GeoSeriesSolver
+# GeoSeriesSolver (Offer the English interface.) (Offrir l'interface en français.)
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![PyQt6](https://img.shields.io/badge/PyQt6-6.4%2B-green)
