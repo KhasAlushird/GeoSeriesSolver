@@ -1,12 +1,8 @@
-import sys
 import numpy as np
-import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from PyQt6.QtWidgets import QMessageBox
-import os
-import importlib
-from Resources.Helpers import serie_calculer, Grandiant_color
+from GeoSeriesSolver.Resources.Helpers import serie_calculer, Grandiant_color
 from sympy import (latex, simplify, sin, cos, tan, 
                    ln, exp, Abs, pi, I, E, asin, acos, atan,
                    sinh, cosh, tanh, sqrt, log, factorial)

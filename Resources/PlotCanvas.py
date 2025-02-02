@@ -1,19 +1,16 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.collections import PathCollection
 from PyQt6.QtWidgets import QMessageBox
-import os
-import importlib
-from Resources.Helpers import serie_calculer,serieFonction_calculer,Grandiant_color
-from Resources._temp_code import F
+from GeoSeriesSolver.Resources.Helpers import serie_calculer,serieFonction_calculer,Grandiant_color,resource_path
+# from GeoSeriesSolver.Resources._temp_code import F
 
 from sympy import (latex, simplify, sin, cos, tan, 
                    ln, exp, Abs, pi, I, E, asin, acos, atan,
                      sinh, cosh, tanh, sqrt, log, factorial)
+
 
 
 
@@ -31,6 +28,7 @@ class PlotCanvas(FigureCanvas):
         self.compare_mode = False
         self.have_error = False
         self.have_warned_for_nan = False
+        self.F = None
         self.range_mode = '0-10'
         self.expression = 'n**2'
         self.latex_expression = r'$n^2$'
@@ -53,16 +51,20 @@ class PlotCanvas(FigureCanvas):
         self.latex_expression+='$'
         self.plot()
 
-    def _F_reloader(self):
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        resources_dir = os.path.join(current_dir, '..', 'Resources')
-        if resources_dir not in sys.path:
-            sys.path.append(resources_dir)
+    def set_F(self,F):
+        self.F = F
+
+    # def _F_reloader(self):
+    #     # current_dir = os.path.dirname(os.path.abspath(__file__))
+    #     # resources_dir = os.path.join(current_dir, '..', 'Resources')
+    #     resources_dir = resource_path(os.path.join('GeoSeriesSolver\\Resources', '_temp_code.py'))
+    #     if resources_dir not in sys.path:
+    #         sys.path.append(resources_dir)
         
-        import _temp_code
-        importlib.reload(_temp_code)
-        F = _temp_code.F
-        return F
+    #     import _temp_code
+    #     importlib.reload(_temp_code)
+    #     F = _temp_code.F
+    #     return F
     
     def plot(self):
         # if not self.compare_mode:
@@ -207,7 +209,7 @@ class PlotCanvas(FigureCanvas):
         for n in x_points:
             #进阶模式算法
             if self.advanced_mode:
-                F = self._F_reloader()
+                F = self.F
                 
                 try:
                     y_points.append(F(n))

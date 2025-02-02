@@ -49,6 +49,7 @@ python_editor:
   syntax_check: "语法检查"
   msg_warning: "警告"
   msg_F_missing: "函数F未定义"
+  msg_latex_error: "output_latex函数缺失"
 
 
 

@@ -51,3 +51,4 @@ python_editor:
   syntax_check: "Vérification de la syntaxe"
   msg_warning: "Avertissement"
   msg_F_missing: "La fonction F n'est pas définie"
+  msg_latex_error: "La fonction output_latex est manquante"

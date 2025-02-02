@@ -15,8 +15,8 @@ import ast
 
 
 
-from Resources.Helpers import LineNumberArea
-from Resources._temp_code import output_latex
+from GeoSeriesSolver.Resources.Helpers import LineNumberArea,resource_path,get_temp_code_path,write_dynamic_code,load_dynamic_module,code_generator
+# from GeoSeriesSolver.Resources._temp_code import output_latex
 
 
 
@@ -137,17 +137,12 @@ class CodeEditor(QPlainTextEdit):
 
     def setPlaceholderText(self):
         # 设置预设的文字
-        preset_text = """import latexify
-import math
-
+        preset_text = """
 def F(n):
     if n == 0:
         return math.cos(n)
     else:
         return F(n-1) + 1
-
-def output_latex():
-    return latexify.get_latex(F)
 """
         self.setPlainText(preset_text)
     def keyPressEvent(self, event):
@@ -173,6 +168,7 @@ def output_latex():
 class PythonEditor(QWidget):
     code_text = pyqtSignal(str)
     advanced_mode_signal = pyqtSignal()
+    F_signal = pyqtSignal(object)
     
     def __init__(self,localization):
         super().__init__()
@@ -201,15 +197,30 @@ class PythonEditor(QWidget):
             QMessageBox.warning(self, self.localization['msg_warning'], self.localization['syntax_error'])
             return
         code = self.editor.toPlainText()
-        if not re.search(r'def\s+F\s*\(', code):
+        code = code_generator(code)
+        # if not re.search(r'def\s+F\s*\(', code):
+        #     QMessageBox.warning(self, self.localization['msg_warning'], self.localization['msg_F_missing'])
+        #     return
+        
+        # file_path = resource_path(os.path.join('GeoSeriesSolver\\Resources', '_temp_code.py'))
+        # with open(file_path, 'w') as file:
+        #     file.write(code)
+        file_path = write_dynamic_code(code)
+        module = load_dynamic_module(file_path)
+        try:
+            F_function = module.F
+        except Exception as e:
             QMessageBox.warning(self, self.localization['msg_warning'], self.localization['msg_F_missing'])
             return
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(current_dir, '..', 'Resources', '_temp_code.py')
-        with open(file_path, 'w') as file:
-            file.write(code)
 
-        self.code_text.emit(output_latex())
+        try:
+            latex_expression = module.output_latex()
+        except Exception as e:
+            QMessageBox.warning(self, self.localization['msg_warning'], self.localization['msg_latex_error'])
+            return
+        
+        self.F_signal.emit(F_function)
+        self.code_text.emit(latex_expression)
         self.advanced_mode_signal.emit()
         # print(output_latex())
 
@@ -219,18 +230,18 @@ class PythonEditor(QWidget):
 
 
 
-def main():
-    app = QApplication(sys.argv)
-    main_window = QWidget()
-    main_window.setWindowTitle('Main Application')
-    main_window.setGeometry(100, 100, 800, 600)
+# def main():
+#     app = QApplication(sys.argv)
+#     main_window = QWidget()
+#     main_window.setWindowTitle('Main Application')
+#     main_window.setGeometry(100, 100, 800, 600)
 
-    layout = QVBoxLayout(main_window)
-    image_displayer = PythonEditor()
-    layout.addWidget(image_displayer)
+#     layout = QVBoxLayout(main_window)
+#     image_displayer = PythonEditor()
+#     layout.addWidget(image_displayer)
 
-    main_window.show()
-    sys.exit(app.exec())
+#     main_window.show()
+#     sys.exit(app.exec())
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()

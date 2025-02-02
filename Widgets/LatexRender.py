@@ -1,7 +1,5 @@
 
 import sys
-from PyQt6.QtWidgets import QLabel, QLineEdit,QHBoxLayout, QApplication, QWidget, QCheckBox, QVBoxLayout, QPushButton
-from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from sympy import latex,simplify
 from PyQt6.QtCore import Qt
@@ -13,7 +11,7 @@ import re
 # if resources_dir not in sys.path:
 #     sys.path.append(resources_dir)
 # from Helpers import latex_render
-from Resources.Helpers import latex_render
+from GeoSeriesSolver.Resources.Helpers import latex_render
 
 
 class LatexRender(QWebEngineView):

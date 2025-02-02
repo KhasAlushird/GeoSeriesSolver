@@ -5,15 +5,14 @@ from PyQt6.QtWidgets import (QApplication, QWidget,
                 QVBoxLayout, QCheckBox, QComboBox,QMessageBox,QHBoxLayout,
                 QSlider,QLabel,QStackedWidget,QLineEdit,QPushButton,QSplitter)
 from PyQt6.QtCore import Qt
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from sympy import (latex, simplify, sin, cos, tan, 
                    ln, exp, Abs, pi, I, E, asin, acos, atan,
                      sinh, cosh, tanh, sqrt, log, factorial)
 import math
 
-from Resources.PlotCanvas import PlotCanvas
-from Resources.PolarPlotCanvas import PolarPlotCanvas
-from Resources.Helpers import function_range_getter
+from GeoSeriesSolver.Resources.PlotCanvas import PlotCanvas
+from GeoSeriesSolver.Resources.PolarPlotCanvas import PolarPlotCanvas
+from GeoSeriesSolver.Resources.Helpers import function_range_getter
 
 class ImageDisplayer(QWidget):
     def __init__(self,localization, parent=None):
@@ -296,18 +295,18 @@ class ImageDisplayer(QWidget):
         self.plot_canvas.clear_vertical_lines()
         # print('clear_plot execute')
 
-def main():
-    app = QApplication(sys.argv)
-    main_window = QWidget()
-    main_window.setWindowTitle('Main Application')
-    main_window.setGeometry(100, 100, 800, 600)
+# def main():
+#     app = QApplication(sys.argv)
+#     main_window = QWidget()
+#     main_window.setWindowTitle('Main Application')
+#     main_window.setGeometry(100, 100, 800, 600)
 
-    layout = QVBoxLayout(main_window)
-    image_displayer = ImageDisplayer(main_window)
-    layout.addWidget(image_displayer)
+#     layout = QVBoxLayout(main_window)
+#     image_displayer = ImageDisplayer(main_window)
+#     layout.addWidget(image_displayer)
 
-    main_window.show()
-    sys.exit(app.exec())
+#     main_window.show()
+#     sys.exit(app.exec())
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()

@@ -1,13 +1,11 @@
 import sys
-from PyQt6.QtWidgets import (QLabel, QLineEdit,QHBoxLayout, QApplication, QWidget, QCheckBox, 
+from PyQt6.QtWidgets import (QLabel, QLineEdit,QHBoxLayout, QWidget, QCheckBox, 
                              QVBoxLayout, QMessageBox,QPushButton,QStackedWidget)
 from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWebEngineWidgets import QWebEngineView
 from sympy import latex,simplify
 from PyQt6.QtCore import Qt
 import re
-from Resources.Helpers import has_illegal_variables
-from PyQt6.QtWidgets import QSpacerItem, QSizePolicy
+from GeoSeriesSolver.Resources.Helpers import has_illegal_variables
 
 class ExpressionInputer(QWidget):
     expression_changed_signal_displayer = pyqtSignal(list)  # 发送给ImageDisplayer,格式为[latex_expression,sympy_expression]
@@ -243,13 +241,13 @@ class ExpressionInputer(QWidget):
         self.range_inputer_label.setText(self.localization['range_inputer'])
 
 
-def main():
-    app = QApplication(sys.argv)
-    ex = ExpressionInputer()
-    ex.show()
-    sys.exit(app.exec())
+# def main():
+#     app = QApplication(sys.argv)
+#     ex = ExpressionInputer()
+#     ex.show()
+#     sys.exit(app.exec())
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
 
 

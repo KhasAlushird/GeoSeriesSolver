@@ -7,6 +7,77 @@ from PyQt6.QtCore import QSize, QRect
 from PyQt6.QtGui import QColor, QPainter
 from PyQt6.QtCore import Qt
 import re
+import sys
+import os
+import tempfile
+import importlib
+# import logging
+
+
+def code_generator(user_code):
+    preset_code = """import sys
+import math
+import os
+if hasattr(sys, '_MEIPASS'):
+    latexify_path = os.path.join(sys._MEIPASS, 'latexify')
+else:
+    latexify_path = os.path.join(os.path.dirname(sys.executable), 'Lib', 'site-packages', 'latexify')
+if latexify_path not in sys.path:
+    sys.path.append(latexify_path)
+import latexify
+"""
+
+    suffix_code = '''
+def output_latex():
+    return latexify.get_latex(F)
+'''
+
+    code = preset_code + user_code + suffix_code
+    return code
+
+def get_temp_code_path():
+    """获取临时目录中的代码文件路径"""
+    temp_dir = tempfile.gettempdir()
+    file_path = os.path.join(temp_dir, 'Helpers.py')
+    return file_path
+
+
+def write_dynamic_code(code):
+    """将代码写入临时文件"""
+    file_path = get_temp_code_path()
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.write(code)
+    # logging.debug(f"动态代码已写入: {file_path}")
+    return file_path
+
+
+def load_dynamic_module(file_path):
+    """动态加载模块"""
+    temp_dir = os.path.dirname(file_path)
+    if temp_dir not in sys.path:
+        sys.path.append(temp_dir)
+    
+    module_name = os.path.splitext(os.path.basename(file_path))[0]
+    # logging.debug(f"正在加载模块: {module_name}")
+    try:
+        module = importlib.import_module(module_name)
+        importlib.reload(module)
+        return module
+    except Exception as e:
+        # logging.error(f"加载模块失败: {str(e)}", exc_info=True)
+        raise
+
+
+def resource_path(relative_path):
+    """ 动态获取资源路径 """
+    if hasattr(sys, '_MEIPASS'):
+        # 打包后的路径：_MEIPASS/_internal/
+        base_path = sys._MEIPASS
+    else:
+        # 开发环境的路径：项目根目录
+        base_path = os.path.abspath(os.path.dirname(__file__))
+    return os.path.join(base_path, relative_path)
+
 def latex_render(latex_expression):
 
     html_content = f"""
