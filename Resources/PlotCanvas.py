@@ -93,7 +93,7 @@ class PlotCanvas(FigureCanvas):
                     self.ax.set_ylabel(r'$f_n$', fontsize=14, rotation=0)
                     self.ax.set_xlabel('x')
 
-        if self.serieFonction_mode:
+        if self.serieFonction_mode and not self.advanced_mode:
             self._fonction_scatter()
         else:
             self._point_scatter(self.range_mode)
