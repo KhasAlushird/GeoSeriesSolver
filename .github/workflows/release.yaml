@@ -1,0 +1,63 @@
+name: release
+
+# Only do the release on x.y.z tags.
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+# We need this to be able to create releases.
+permissions:
+  contents: write
+
+jobs:
+  # The create-release job runs purely to initialize the GitHub release itself,
+  # and names the release after the `x.y.z` tag that was pushed. It's separate
+  # from building the release so that we only create the release once.
+  create-release:
+    name: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get the release version from the tag
+        if: env.VERSION == ''
+        run: echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+      - name: Show the version
+        run: |
+          echo "version is: $VERSION"
+      - name: Check that tag version and __about__.py version are the same
+        shell: bash
+        run: |
+          if ! grep -q "VERSION = \"$VERSION\"" GeoSeriesSolver/__about__.py; then
+            echo "version does not match __about__.py" >&2
+            exit 1
+          fi
+      - name: Create GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create $VERSION --draft --verify-tag --title $VERSION
+    outputs:
+      version: ${{ env.VERSION }}
+
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['windows-latest', 'ubuntu-latest']
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.12
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt pyinstaller
+    - name: Build
+      run: pyinstaller GeoSeriesSolver.spec
+    - name: Upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: GeoSeriesSolver-${{ needs.create-release.outputs.version }}-${{ matrix.os }}
+        path: dist/GeoSeriesSolver
