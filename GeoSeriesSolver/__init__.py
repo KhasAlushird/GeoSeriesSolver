@@ -11,7 +11,7 @@ from GeoSeriesSolver.Widgets.PythonEditor import PythonEditor
 from GeoSeriesSolver.Resources.Helpers import resource_path
 import os
 import yaml
-# import logging
+import logging
 
 
 
@@ -173,7 +173,7 @@ def main():
         main_window.show()
         sys.exit(app.exec())
     except Exception as e:
-        # logging.error("程序崩溃！错误信息：", exc_info=True)
+        logging.error("程序崩溃！错误信息：", exc_info=True)
         sys.exit(1)
 
 if __name__ == '__main__':

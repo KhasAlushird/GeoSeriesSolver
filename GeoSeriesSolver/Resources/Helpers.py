@@ -75,7 +75,11 @@ def resource_path(relative_path):
         base_path = sys._MEIPASS
     else:
         # 开发环境的路径：项目根目录
-        base_path = os.path.abspath(os.path.dirname(__file__))
+        # __file__ -> "./Resources/Helpers.py"
+        # os.path.dirname(__file__) -> "./Resources"
+        # parent -> "./"
+
+        base_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..")
     return os.path.join(base_path, relative_path)
 
 def latex_render(latex_expression):
