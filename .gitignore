@@ -136,6 +136,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+bin/
+CACHEDIR.TAG
+pyvenv.cfg
 
 # Spyder project settings
 .spyderproject
