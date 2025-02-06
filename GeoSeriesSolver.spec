@@ -5,7 +5,7 @@ a = Analysis(
     ['GeoSeriesSolver/__main__.py'],
     pathex=[],
     binaries=[],
-    datas=[('GeoSeriesSolver/images', 'images'), ('GeoSeriesSolver/Locolizations/', 'Locolizations'), ('GeoSeriesSolver/Resources/', 'Resources'), ('GeoSeriesSolver/Widgets/', 'Widgets'), ('GeoSeriesSolver/icon1.ico', '.')],
+    datas=[('GeoSeriesSolver/images', 'images'), ('GeoSeriesSolver/Localizations/', 'Localizations'), ('GeoSeriesSolver/Resources/', 'Resources'), ('GeoSeriesSolver/Widgets/', 'Widgets'), ('GeoSeriesSolver/icon1.ico', '.')],
     hiddenimports=['latexify'],
     hookspath=[],
     hooksconfig={},
