@@ -35,7 +35,7 @@ import logging
 def load_translations(language):
     """ 加载本地化文件 """
     # 动态获取资源路径
-    loc_file_path = resource_path(os.path.join('Locolizations', f'{language}.yaml'))
+    loc_file_path = resource_path(os.path.join('Localizations', f'{language}.yaml'))
     
     # 检查文件是否存在
     if not os.path.exists(loc_file_path):
