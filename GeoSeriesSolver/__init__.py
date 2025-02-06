@@ -11,7 +11,7 @@ from GeoSeriesSolver.Widgets.PythonEditor import PythonEditor
 from GeoSeriesSolver.Resources.Helpers import resource_path
 import os
 import yaml
-# import logging
+import logging
 
 
 
@@ -35,7 +35,7 @@ import yaml
 def load_translations(language):
     """ 加载本地化文件 """
     # 动态获取资源路径
-    loc_file_path = resource_path(os.path.join('Locolizations', f'{language}.yaml'))
+    loc_file_path = resource_path(os.path.join('Localizations', f'{language}.yaml'))
     
     # 检查文件是否存在
     if not os.path.exists(loc_file_path):
@@ -173,7 +173,7 @@ def main():
         main_window.show()
         sys.exit(app.exec())
     except Exception as e:
-        # logging.error("程序崩溃！错误信息：", exc_info=True)
+        logging.error("程序崩溃！错误信息：", exc_info=True)
         sys.exit(1)
 
 if __name__ == '__main__':

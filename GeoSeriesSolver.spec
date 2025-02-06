@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['__init__.py'],
-    pathex=['GeoSeriesSolver'],
+    ['GeoSeriesSolver/__main__.py'],
+    pathex=[],
     binaries=[],
-    datas=[('Locolizations/*.yaml', 'Locolizations/')],
+    datas=[('GeoSeriesSolver/images', 'images'), ('GeoSeriesSolver/Localizations/', 'Localizations'), ('GeoSeriesSolver/Resources/', 'Resources'), ('GeoSeriesSolver/Widgets/', 'Widgets'), ('GeoSeriesSolver/icon1.ico', '.')],
     hiddenimports=['latexify'],
     hookspath=[],
     hooksconfig={},
@@ -26,13 +26,12 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,
+    console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['icon1.ico'],
 )
 coll = COLLECT(
     exe,

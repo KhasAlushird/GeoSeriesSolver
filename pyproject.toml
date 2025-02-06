@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "GeoSeriesSolver"
+dynamic = ["version"]
+dependencies = ["contourpy",
+    "cycler",
+    "dill",
+    "fonttools",
+    "kiwisolver",
+    "latexify-py",
+    "matplotlib",
+    "mpmath",
+    "numpy",
+    "packaging",
+    "pillow",
+    "Pygments",
+    "pyparsing",
+    "PyQt6",
+    "PyQt6-Qt6",
+    "PyQt6-WebEngine",
+    "PyQt6-WebEngine-Qt6",
+    "PyQt6_sip",
+    "python-dateutil",
+    "PyYAML",
+    "six",
+    "sympy"]
+
+[project.scripts]
+gsolver = "GeoSeriesSolver:main"
+
+[tool.hatch.version]
+path = "GeoSeriesSolver/__about__.py"
